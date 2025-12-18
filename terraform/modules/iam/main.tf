@@ -1,8 +1,3 @@
-variable "project_id" {
-  type        = string
-  description = "GCP project ID"
-}
-
 # Get project number (needed for Composer service agent)
 data "google_project" "current" {
   project_id = var.project_id
