@@ -32,7 +32,7 @@ resource "google_composer_environment" "composer_instance" {
         storage_gb = 1
 
         min_count  = 1
-        max_count  = 1
+        max_count  = 2
       }
     }
   }
