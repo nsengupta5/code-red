@@ -1,5 +1,5 @@
 resource "google_composer_environment" "this" {
-  name   = var.name
+  composer_name = var.name
   region = var.region
 
   config {

@@ -5,6 +5,6 @@ provider "google" {
 
 module "composer" {
   source = "../../modules/composer"
-  name   = "dev-composer"
+  name   = var.composer_name
   region = var.region
 }
