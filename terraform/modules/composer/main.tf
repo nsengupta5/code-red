@@ -1,5 +1,5 @@
-resource "google_composer_environment" "this" {
-  composer_name = var.name
+resource "google_composer_environment" "composer_instance" {
+  name = var.name
   region = var.region
 
   config {

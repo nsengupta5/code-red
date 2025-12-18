@@ -1,9 +1,4 @@
-variable "project_id" {
-  description = "Project name"
-  type        = string
-}
-
-variable "composer_name" {
+variable "name" {
   description = "Cloud Composer environment name"
   type        = string
 }
