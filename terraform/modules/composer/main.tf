@@ -3,6 +3,8 @@ resource "google_composer_environment" "this" {
   region = var.region
 
   config {
+    environment_size = "ENVIRONMENT_SIZE_SMALL"
+
     node_config {
       machine_type = "e2-small"
     }
@@ -10,7 +12,5 @@ resource "google_composer_environment" "this" {
     software_config {
       image_version = "composer-2-airflow-2"
     }
-
-    environment_size = "ENVIRONMENT_SIZE_SMALL"
   }
 }
