@@ -28,7 +28,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: terraform/envs/dev
-        run: terraform init
+        run: terraform init -reconfigure
 
       - name: Debug state
         working-directory: terraform/envs/dev
