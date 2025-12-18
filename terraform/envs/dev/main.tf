@@ -5,7 +5,7 @@ provider "google" {
 
 module "composer" {
   source = "../../modules/composer"
-  composer_name   = var.composer_name
+  name   = var.composer_name
   region = var.region
-  project_id = var.project_id
+  project = var.project_id
 }
