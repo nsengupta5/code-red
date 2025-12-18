@@ -1,9 +1,6 @@
-variable "name" {
-  description = "Cloud Composer environment name"
-  type        = string
-}
-
-variable "region" {
-  description = "Region for Cloud Composer"
-  type        = string
+variable "name" { type = string }
+variable "region" { type = string }
+variable "image_version" {
+  type    = string
+  default = "composer-2-airflow-2"
 }
