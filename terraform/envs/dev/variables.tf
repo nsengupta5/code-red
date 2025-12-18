@@ -5,7 +5,7 @@ variable "project_id" {
 
 variable "region" {
   type    = string
-  default = "eu-west2"
+  default = "europe-west2"
 }
 
 variable "composer_name" {
