@@ -8,7 +8,7 @@ resource "google_composer_environment" "composer_instance" {
     environment_size = "ENVIRONMENT_SIZE_SMALL"
 
     node_config {
-      service_account = google_service_account.composer.email
+      service_account = var.service_account_email
     }
 
     software_config {
