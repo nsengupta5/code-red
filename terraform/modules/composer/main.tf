@@ -5,13 +5,16 @@ resource "google_composer_environment" "composer_instance" {
   region = var.region
 
   config {
-    environment_size = "ENVIRONMENT_SIZE_SMALL" # key cost lever :contentReference[oaicite:4]{index=4}
+    environment_size = "ENVIRONMENT_SIZE_SMALL"
+
+    node_config {
+      service_account = var.service_account_email
+    }
 
     software_config {
       image_version = var.image_version
     }
 
-    # Composer 2 sizing is here (not node_config.machine_type) :contentReference[oaicite:5]{index=5}
     workloads_config {
       scheduler {
         cpu        = 0.5
@@ -30,11 +33,9 @@ resource "google_composer_environment" "composer_instance" {
         cpu        = 0.5
         memory_gb  = 1.875
         storage_gb = 1
-
         min_count  = 1
-        max_count  = 2
+        max_count  = 1
       }
     }
   }
 }
-
