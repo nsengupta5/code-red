@@ -32,3 +32,9 @@ module "composer" {
   region                 = var.region
   service_account_email  = module.iam.composer_service_account_email
 }
+
+module "iam" {
+  source     = "../../modules/iam"
+  project_id = var.project_id
+}
+
