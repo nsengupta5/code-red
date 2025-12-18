@@ -26,6 +26,13 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      - name: Debug working directory
+        run: |
+          pwd
+          ls -la
+          find . -name backend.tf
+
+
       - name: Terraform Init
         working-directory: terraform/envs/dev
         run: terraform init -reconfigure
