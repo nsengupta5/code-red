@@ -7,5 +7,4 @@ module "composer" {
   source = "../../modules/composer"
   name   = var.composer_name
   region = var.region
-  project = var.project_id
 }
