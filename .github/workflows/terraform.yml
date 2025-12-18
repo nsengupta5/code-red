@@ -30,6 +30,10 @@ jobs:
         working-directory: terraform/envs/dev
         run: terraform init
 
+      - name: Debug state
+        working-directory: terraform/envs/dev
+        run: terraform state list || true
+
       - name: Terraform Plan
         working-directory: terraform/envs/dev
         run: terraform plan
