@@ -21,10 +21,6 @@ provider "google-beta" {
   region  = var.region
 }
 
-module "iam" {
-  source = "../../modules/iam"
-}
-
 module "composer" {
   source = "../../modules/composer"
 
