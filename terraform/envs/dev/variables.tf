@@ -12,3 +12,9 @@ variable "composer_name" {
   type    = string
   default = "composer-dev"
 }
+
+variable "enable_composer" {
+  description = "Whether to create the Cloud Composer environment"
+  type        = bool
+  default     = false
+}
