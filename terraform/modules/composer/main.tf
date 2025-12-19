@@ -17,25 +17,26 @@ resource "google_composer_environment" "composer_instance" {
 
     workloads_config {
       scheduler {
-        cpu        = 0.5
-        memory_gb  = 1.875
-        storage_gb = 1
+        cpu        = 1
+        memory_gb = 3.75
+        storage_gb = 5
         count      = 1
       }
 
       web_server {
-        cpu        = 0.5
-        memory_gb  = 1.875
-        storage_gb = 1
+        cpu        = 1
+        memory_gb = 3.75
+        storage_gb = 5
       }
 
       worker {
-        cpu        = 0.5
-        memory_gb  = 1.875
-        storage_gb = 1
+        cpu        = 1
+        memory_gb = 3.75
+        storage_gb = 5
         min_count  = 1
         max_count  = 1
       }
     }
+
   }
 }

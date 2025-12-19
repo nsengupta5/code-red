@@ -22,12 +22,14 @@ provider "google-beta" {
 }
 
 module "composer" {
-  source = "../../modules/composer"
+  count = var.enable_composer ? 1 : 0
 
-  name                   = "dev-composer"
-  region                 = var.region
-  service_account_email  = module.iam.composer_service_account_email
+  source                = "../../modules/composer"
+  name                  = "dev-composer"
+  region                = var.region
+  service_account_email = module.iam.composer_service_account_email
 }
+
 
 module "iam" {
   source     = "../../modules/iam"
