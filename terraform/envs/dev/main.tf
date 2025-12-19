@@ -11,15 +11,18 @@ terraform {
   }
 }
 
+
 provider "google" {
   project = var.project_id
   region  = var.region
 }
 
+
 provider "google-beta" {
   project = var.project_id
   region  = var.region
 }
+
 
 module "composer" {
   count = var.enable_composer ? 1 : 0
@@ -36,3 +39,10 @@ module "iam" {
   project_id = var.project_id
 }
 
+
+module "stb_bucket" {
+  source = "../../data/stb"
+
+  project_id       = var.project_id
+  location         = var.region
+}
