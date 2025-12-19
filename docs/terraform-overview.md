@@ -181,27 +181,87 @@ Key permissions for the deployer SA:
 - Requires **explicit service account configuration**
 - Highly sensitive to **CPU and SSD quotas**
 
-Because of this, Composer can be toggled:
-
-```hcl
-variable "enable_composer" {
-  type    = bool
-  default = false
-}
-```
-
-Usage:
-
-```bash
-terraform apply -var="enable_composer=true"
-terraform apply -var="enable_composer=false"
-```
-
-This allows you to destroy Composer when not in use to control cost.
+Because of cost and quota sensitivity, **Composer is toggled on/off via Git**, not CLI flags.
 
 ---
 
-### 7. Local development workflow
+### 7. Toggling Cloud Composer on and off (Git-driven)
+
+Composer creation is controlled by a committed Terraform variables file. This ensures:
+
+- Local runs and CI behave identically
+- Composer is never created accidentally
+- Desired state is visible in Git history
+
+#### The control file
+
+```
+terraform/envs/dev/dev.auto.tfvars
+```
+
+```hcl
+enable_composer = false
+```
+
+Terraform automatically loads `*.auto.tfvars` files, so **no `-var` flags are required**.
+
+#### Variable definition
+
+In `terraform/envs/dev/variables.tf`:
+
+```hcl
+variable "enable_composer" {
+  description = "Enable or disable the Cloud Composer environment"
+  type        = bool
+}
+```
+
+The variable intentionally has **no default** to force an explicit choice per environment.
+
+#### Module wiring
+
+In `terraform/envs/dev/main.tf`:
+
+```hcl
+module "composer" {
+  count = var.enable_composer ? 1 : 0
+
+  source                = "../../modules/composer"
+  name                  = "dev-composer"
+  region                = var.region
+  project_id            = var.project_id
+  service_account_email = module.iam.composer_service_account_email
+}
+```
+
+When `enable_composer = false`, the module does not exist and Composer is destroyed.
+
+#### Turning Composer ON
+
+1. Edit `dev.auto.tfvars`
+2. Set:
+   ```hcl
+   enable_composer = true
+   ```
+3. Commit and push
+4. GitHub Actions applies the change
+
+#### Turning Composer OFF
+
+1. Edit `dev.auto.tfvars`
+2. Set:
+   ```hcl
+   enable_composer = false
+   ```
+3. Commit and push
+4. GitHub Actions destroys the Composer environment
+
+IAM resources and service accounts are **not destroyed**.
+
+---
+
+
+### 8. Local development workflow
 
 Before running Terraform locally:
 
