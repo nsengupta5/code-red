@@ -23,3 +23,22 @@ resource "google_project_iam_member" "composer_service_agent_ext" {
   role    = "roles/composer.ServiceAgentV2Ext"
   member  = "serviceAccount:service-${data.google_project.current.number}@cloudcomposer-accounts.iam.gserviceaccount.com"
 }
+
+# CI image publisher service account
+resource "google_service_account" "ci_artifact_publisher" {
+  account_id   = "ci-artifact-publisher"
+  display_name = "CI Artifact Registry Publisher"
+}
+
+resource "google_project_iam_member" "ci_artifact_writer" {
+  project = var.project_id
+  role    = "roles/artifactregistry.writer"
+  member  = "serviceAccount:${google_service_account.ci_artifact_publisher.email}"
+}
+
+resource "google_service_account_iam_member" "ci_wif_binding" {
+  service_account_id = google_service_account.ci_artifact_publisher.name
+  role               = "roles/iam.workloadIdentityUser"
+
+  member = "principalSet://iam.googleapis.com/projects/258083003066/locations/global/workloadIdentityPools/github-pool/attribute.repository/nsengupta5/code-red"
+}
