@@ -1,1 +1,1 @@
-enable_composer = true
+enable_composer = false
