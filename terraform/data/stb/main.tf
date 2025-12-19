@@ -1,9 +1,6 @@
 # This is where bucket resources are defined
 
 
-data "google_project" "current" {
-  project_id = var.project_id
-}
 
 # Dummy data bucket 
 resource "google_storage_bucket" "dummyData" {
