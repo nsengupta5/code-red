@@ -21,6 +21,7 @@ provider "google-beta" {
   region  = var.region
 }
 
+# Cloud Composer is expensive; disabled by default - amend dev.auto.tfvars to enable
 module "composer" {
   count = var.enable_composer ? 1 : 0
 
