@@ -27,7 +27,6 @@ module "composer" {
   source                = "../../modules/composer"
   name                  = "dev-composer"
   region                = var.region
-  project_id            = var.project_id
   service_account_email = module.iam.composer_service_account_email
 }
 
