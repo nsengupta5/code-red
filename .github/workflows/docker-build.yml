@@ -1,0 +1,61 @@
+name: Build and Push Buggy Python Image
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  id-token: write     # REQUIRED for Workload Identity Federation
+  contents: read
+
+env:
+  PROJECT_ID: project-990b8649-da36-4d4c-9d9
+  REGION: us-central1
+  REPOSITORY: buggy-python
+  IMAGE_NAME: buggy-oom
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout source code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Authenticate to GCP via Workload Identity Federation
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/258083003066/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: ci-artifact-publisher@project-990b8649-da36-4d4c-9d9.iam.gserviceaccount.com
+
+      # 3. Install & configure gcloud
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      # 4. Configure Docker to authenticate to Artifact Registry
+      - name: Configure Docker auth
+        run: |
+          gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+
+      # 5. Build Docker image
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE_NAME}:${GITHUB_SHA} \
+            -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE_NAME}:latest \
+            .
+
+      # 6. Push Docker image (both tags)
+      - name: Push Docker image
+        run: |
+          docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE_NAME}:${GITHUB_SHA}
+          docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE_NAME}:latest
+
+      # 7. (Optional) Verify image exists
+      - name: Verify image in Artifact Registry
+        run: |
+          gcloud artifacts docker images list \
+            ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}
