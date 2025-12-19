@@ -46,3 +46,12 @@ module "stb_bucket" {
   project_id       = var.project_id
   location         = var.region
 }
+
+
+module "artifact_registry" {
+  source = "../../modules/artifact_registry"
+
+  project_id    = var.project_id
+  location      = var.region
+  repository_id = "buggy-python"
+}
