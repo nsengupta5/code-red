@@ -4,7 +4,7 @@
 
 # Dummy data bucket 
 resource "google_storage_bucket" "dummyData" {
-  name          = "stb-raw-${local.project_number}"
+  name          = "dummy-data-${local.project_number}"
   location      = var.location
   storage_class = "STANDARD"
 

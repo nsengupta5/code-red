@@ -45,5 +45,4 @@ module "stb_bucket" {
 
   project_id       = var.project_id
   location         = var.region
-  bucket_base_name = "stb-data"
 }
