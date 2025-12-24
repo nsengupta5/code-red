@@ -64,5 +64,6 @@ module "services" {
 
   services = [
     "run.googleapis.com",
+    "dataflow.googleapis.com",
   ]
 }
