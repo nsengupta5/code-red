@@ -24,6 +24,7 @@ provider "google-beta" {
 }
 
 
+
 module "composer" {
   count = var.enable_composer ? 1 : 0
 
@@ -54,4 +55,14 @@ module "artifact_registry" {
   project_id    = var.project_id
   location      = var.region
   repository_id = "buggy-python"
+}
+
+
+module "services" {
+  source     = "../../modules/services"
+  project_id = var.project_id
+
+  services = [
+    "run.googleapis.com",
+  ]
 }
