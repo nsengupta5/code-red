@@ -99,3 +99,17 @@ module "services" {
     "monitoring.googleapis.com",
   ]
 }
+
+
+#### Define the BigQuery datasets in the project ####
+
+module "bq_animal_facts" {
+  source     = "../../modules/bigquery"
+  project_id = var.project_id
+
+  dataset_id = "animal_facts"
+  location   = "US"
+
+  # Safe for dev; set to false in prod
+  delete_contents_on_destroy = true
+}
