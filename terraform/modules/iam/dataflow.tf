@@ -25,3 +25,9 @@ resource "google_project_iam_member" "dataflow_ar_reader" {
   role    = "roles/artifactregistry.reader"
   member  = "serviceAccount:${google_service_account.dataflow_worker.email}"
 }
+
+resource "google_project_iam_member" "dataflow_run_invoker" {
+  project = var.project_id
+  role    = "roles/run.invoker"
+  member  = "serviceAccount:${google_service_account.dataflow_worker.email}"
+}
