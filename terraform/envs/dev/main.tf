@@ -24,6 +24,7 @@ provider "google-beta" {
 }
 
 
+#### Define Cloud Composer resource - note this is toggled on/off using dev.auto.tfvars ####
 
 module "composer" {
   count = var.enable_composer ? 1 : 0
@@ -35,11 +36,15 @@ module "composer" {
 }
 
 
+#### Service account creation and permissions ####
+
 module "iam" {
   source     = "../../modules/iam"
   project_id = var.project_id
 }
 
+
+#### Define the GCS buckets ####
 
 module "stb_dummy" {
   source     = "../../modules/buckets"
@@ -63,6 +68,8 @@ module "stb_dataflow-staging" {
 }
 
 
+#### Define the artifact registry resource ####
+
 module "artifact_registry" {
   source = "../../modules/artifact_registry"
 
@@ -72,6 +79,8 @@ module "artifact_registry" {
 }
 
 
+#### Define the services to run in the project ####
+
 module "services" {
   source     = "../../modules/services"
   project_id = var.project_id
@@ -79,5 +88,10 @@ module "services" {
   services = [
     "run.googleapis.com",
     "dataflow.googleapis.com",
+    "compute.googleapis.com",
+    "storage.googleapis.com",
+    "artifactregistry.googleapis.com",
+    "logging.googleapis.com",
+    "monitoring.googleapis.com",
   ]
 }
