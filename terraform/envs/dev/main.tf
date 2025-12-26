@@ -39,8 +39,12 @@ module "composer" {
 #### Service account creation and permissions ####
 
 module "iam" {
-  source     = "../../modules/iam"
-  project_id = var.project_id
+  source = "../../modules/iam"
+
+  project_id         = var.project_id
+  github_repo        = "nsengupta5/code-red"
+  wif_project_number = "258083003066"
+  wif_pool_id        = "github-pool"
 }
 
 

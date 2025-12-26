@@ -1,4 +1,20 @@
 variable "project_id" {
+  description = "GCP project ID"
   type        = string
-  description = "GCP project ID where IAM resources are created"
+}
+
+variable "github_repo" {
+  description = "GitHub repository in the form <org>/<repo>"
+  type        = string
+}
+
+variable "wif_project_number" {
+  description = "Project number that owns the Workload Identity Pool (often same as this project)"
+  type        = string
+}
+
+variable "wif_pool_id" {
+  description = "Workload Identity Pool ID"
+  type        = string
+  default     = "github-pool"
 }
