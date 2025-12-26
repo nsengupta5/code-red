@@ -41,11 +41,11 @@ module "iam" {
 }
 
 
-module "stb_bucket" {
-  source = "../../data/stb"
-
-  project_id       = var.project_id
-  location         = var.region
+module "stb_dummy" {
+  source     = "../../modules/buckets"
+  project_id = var.project_id
+  name       = "dummy-data"
+  location   = var.region
 }
 
 
