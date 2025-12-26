@@ -48,6 +48,20 @@ module "stb_dummy" {
   location   = var.region
 }
 
+module "stb_dataflow-temp" {
+  source     = "../../modules/buckets"
+  project_id = var.project_id
+  name       = "dataflow-temp"
+  location   = var.region
+}
+
+module "stb_dataflow-staging" {
+  source     = "../../modules/buckets"
+  project_id = var.project_id
+  name       = "dataflow-staging"
+  location   = var.region
+}
+
 
 module "artifact_registry" {
   source = "../../modules/artifact_registry"
