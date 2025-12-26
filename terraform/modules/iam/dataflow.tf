@@ -31,3 +31,15 @@ resource "google_project_iam_member" "dataflow_run_invoker" {
   role    = "roles/run.invoker"
   member  = "serviceAccount:${google_service_account.dataflow_worker.email}"
 }
+
+resource "google_project_iam_member" "dataflow_bq_dataEditor" {
+  project = var.project_id
+  role    = "roles/bigquery.dataEditor"
+  member  = "serviceAccount:${google_service_account.dataflow_worker.email}"
+}
+
+resource "google_project_iam_member" "dataflow_bq_jobUser" {
+  project = var.project_id
+  role    = "roles/bigquery.jobUser"
+  member  = "serviceAccount:${google_service_account.dataflow_worker.email}"
+}

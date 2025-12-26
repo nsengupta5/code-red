@@ -1,5 +1,16 @@
 {
-  "name": "buggy-python-dataflow",
-  "description": "Dataflow Flex Template for buggy Python pipeline (OOM testing)",
-  "parameters": []
+  "name": "csv-to-bq-dataflow",
+  "description": "Ingest CSV files from GCS to BigQuery using Apache Beam",
+  "parameters": [
+    {
+      "name": "input",
+      "label": "Input GCS Path",
+      "helpText": "GCS path to CSV files (e.g. gs://bucket/input/*.csv)"
+    },
+    {
+      "name": "output_table",
+      "label": "BigQuery Output Table",
+      "helpText": "project:dataset.table"
+    }
+  ]
 }
