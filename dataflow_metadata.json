@@ -1,0 +1,5 @@
+{
+  "name": "buggy-python-dataflow",
+  "description": "Dataflow Flex Template for buggy Python pipeline (OOM testing)",
+  "parameters": []
+}
