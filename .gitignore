@@ -1,2 +1,6 @@
 .terraform/
+.venv
 terraform.tfstate*
+__pycache__/
+*.py[cod]
+.DS_Store

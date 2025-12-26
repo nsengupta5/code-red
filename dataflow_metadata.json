@@ -11,6 +11,11 @@
       "name": "output_table",
       "label": "BigQuery Output Table",
       "helpText": "project:dataset.table"
+    },
+    {
+      "name": "error_table",
+      "label": "BigQuery Error Table",
+      "helpText": "project:dataset.bad_rows"
     }
   ]
 }
