@@ -1,5 +1,5 @@
 variable "project_id" {
-  type = string
+  type    = string
   default = "project-990b8649-da36-4d4c-9d9"
 }
 
