@@ -37,3 +37,4 @@ variable "airflow_ui_source_ranges" {
   description = "CIDRs allowed to access Airflow UI"
   default     = []
 }
+

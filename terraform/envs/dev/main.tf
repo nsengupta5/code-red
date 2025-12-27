@@ -119,17 +119,19 @@ module "bq_animal_facts" {
 #### Define network resources #####
 
 module "network" {
-  source     = "../../modules/network"
-  project_id = var.project_id
-  region     = var.region
+  source = "../../modules/network"
 
-  network_name = "dev-vpc"
-  subnet_name  = "dev-subnet"
-  subnet_cidr  = "10.10.0.0/16"
+  project_id                    = var.project_id
+  region                        = var.region
+  network_name                  = "main-vpc"
+  subnet_name                   = "main-subnet"
+  subnet_cidr                   = "10.10.0.0/16"
 
+  airflow_ui_source_ranges      = var.airflow_ui_source_ranges
   airflow_service_account_email = module.iam.airflow_service_account_email
-  airflow_ui_source_ranges      = ["31.4.245.31/32"]
 }
+
+
 
 
 #### Define Airflow VM resource ####
