@@ -128,7 +128,7 @@ module "network" {
   subnet_cidr  = "10.10.0.0/16"
 
   airflow_service_account_email = module.iam.airflow_service_account_email
-  airflow_ui_source_ranges      = ["YOUR_PUBLIC_IP/32"]
+  airflow_ui_source_ranges      = ["31.4.245.31/32"]
 }
 
 
