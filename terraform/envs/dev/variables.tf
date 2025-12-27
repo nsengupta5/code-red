@@ -18,3 +18,8 @@ variable "enable_composer" {
   type        = bool
   default     = false
 }
+
+variable "airflow_ui_source_ranges" {
+  type        = list(string)
+  description = "CIDRs allowed to access Airflow UI and SSH"
+}
