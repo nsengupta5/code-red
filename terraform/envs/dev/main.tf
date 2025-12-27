@@ -148,6 +148,8 @@ module "airflow_vm" {
 
   service_account_email  = module.iam.airflow_service_account_email
   airflow_admin_password = local.airflow_admin_password
+
+  network_tags = ["airflow-vm"]
 }
 
 
