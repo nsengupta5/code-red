@@ -25,15 +25,15 @@ provider "google-beta" {
 
 
 #### Define Cloud Composer resource - note this is toggled on/off using dev.auto.tfvars ####
-
-module "composer" {
-  count = var.enable_composer ? 1 : 0
-
-  source                = "../../modules/composer"
-  name                  = "dev-composer"
-  region                = var.region
-  service_account_email = module.iam.composer_service_account_email
-}
+#### Commented out as Composer is too big to set up in a GCP Trail project - Service accounts definitions set to disused in IAM modules (composer.tf.disused and outputs.tf.disused)
+#module "composer" {
+#  count = var.enable_composer ? 1 : 0
+#
+#  source                = "../../modules/composer"
+#  name                  = "dev-composer"
+#  region                = var.region
+#  service_account_email = module.iam.composer_service_account_email
+#}
 
 
 #### Service account creation and permissions ####
