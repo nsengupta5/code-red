@@ -97,6 +97,7 @@ module "services" {
     "artifactregistry.googleapis.com",
     "logging.googleapis.com",
     "monitoring.googleapis.com",
+    "secretmanager.googleapis.com",
   ]
 }
 
@@ -113,3 +114,40 @@ module "bq_animal_facts" {
   # Safe for dev; set to false in prod
   delete_contents_on_destroy = true
 }
+
+
+#### Define network resources #####
+
+module "network" {
+  source     = "../../modules/network"
+  project_id = var.project_id
+  region     = var.region
+
+  network_name = "dev-vpc"
+  subnet_name  = "dev-subnet"
+  subnet_cidr  = "10.10.0.0/16"
+
+  airflow_service_account_email = module.iam.airflow_service_account_email
+  airflow_ui_source_ranges      = ["YOUR_PUBLIC_IP/32"]
+}
+
+
+#### Define Airflow VM resource ####
+
+module "airflow_vm" {
+  source = "../../modules/compute/airflow_vm"
+
+  project_id = var.project_id
+  name       = "airflow-dev"
+  zone       = "us-central1-a"
+
+  network    = module.network.vpc_self_link
+  subnetwork = module.network.subnet_self_link
+
+  service_account_email  = module.iam.airflow_service_account_email
+  airflow_admin_password = local.airflow_admin_password
+}
+
+
+
+
