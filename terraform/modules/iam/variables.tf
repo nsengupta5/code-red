@@ -18,3 +18,8 @@ variable "wif_pool_id" {
   type        = string
   default     = "github-pool"
 }
+
+variable "airflow_dag_bucket_name" {
+  type        = string
+  description = "GCS bucket name that stores Airflow DAGs"
+}
