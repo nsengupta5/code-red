@@ -45,6 +45,8 @@ module "iam" {
   github_repo        = "nsengupta5/code-red"
   wif_project_number = "258083003066"
   wif_pool_id        = "github-pool"
+  airflow_dag_bucket_name = module.stb_airflow-dags.bucket_name
+
 }
 
 
@@ -71,6 +73,12 @@ module "stb_dataflow-staging" {
   location   = var.region
 }
 
+module "stb_airflow-dags" {
+  source     = "../../modules/buckets"
+  project_id = var.project_id
+  name       = "airflow-dags"
+  location   = var.region
+}
 
 #### Define the artifact registry resource ####
 
@@ -150,8 +158,9 @@ module "airflow_vm" {
   airflow_admin_password = local.airflow_admin_password
 
   network_tags = ["airflow-vm"]
-}
 
+  dag_gcs_bucket = module.stb_airflow-dags.bucket_name
+}
 
 
 

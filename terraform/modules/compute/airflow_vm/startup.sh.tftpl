@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-############################
-# Terraform-rendered inputs
-############################
-
+#######################################
+# Variables injected by Terraform
+#######################################
 AIRFLOW_VERSION="${airflow_version}"
-PY_CONSTRAINTS_VERSION="${python_constraints_version}"
+PY_CONSTRAINTS="${python_constraints_version}"
 CONSTRAINTS_URL="${constraints_url}"
 
 AIRFLOW_HOME="${airflow_home}"
@@ -24,34 +23,32 @@ ADMIN_EMAIL="${airflow_admin_email}"
 
 INSTALL_PROVIDERS_GOOGLE="${install_providers_google}"
 
-############################
-# OS dependencies
-############################
+# OPTIONAL: set this to empty string if you don’t want DAG sync
+DAG_GCS_BUCKET="${dag_gcs_bucket}"
 
+
+#######################################
+# OS packages
+#######################################
 echo "[startup] Installing OS packages..."
 apt-get update -y
 apt-get install -y --no-install-recommends \
-  python3 \
-  python3-venv \
-  python3-pip \
-  build-essential \
-  curl \
-  ca-certificates \
+  python3 python3-venv python3-pip \
+  build-essential curl ca-certificates \
   sqlite3 \
-  git
+  git \
+  google-cloud-sdk
 
-############################
+#######################################
 # Directory setup
-############################
-
+#######################################
 echo "[startup] Creating Airflow directories..."
 mkdir -p "${airflow_home}" "${dags_dir}"
-chmod 755 "${airflow_home}"
+chmod -R 755 "${airflow_home}"
 
-############################
-# Virtual environment
-############################
-
+#######################################
+# Python virtualenv
+#######################################
 echo "[startup] Creating virtualenv..."
 if [ ! -d "${venv_dir}" ]; then
   python3 -m venv "${venv_dir}"
@@ -61,24 +58,30 @@ fi
 source "${venv_dir}/bin/activate"
 python -m pip install --upgrade pip setuptools wheel
 
-############################
-# Airflow installation
-############################
-
+#######################################
+# Install Airflow
+#######################################
 echo "[startup] Installing Apache Airflow ${airflow_version}..."
-pip install "apache-airflow==${airflow_version}" \
-  --constraint "${constraints_url}"
+pip install "apache-airflow==${airflow_version}" --constraint "${constraints_url}"
 
 if [ "${install_providers_google}" = "true" ]; then
   echo "[startup] Installing Google provider..."
-  pip install "apache-airflow-providers-google" \
-    --constraint "${constraints_url}"
+  pip install "apache-airflow-providers-google" --constraint "${constraints_url}"
 fi
 
-############################
-# Environment configuration
-############################
+#######################################
+# Sync DAGs from GCS (optional but recommended)
+#######################################
+if [ -n "${dag_gcs_bucket}" ]; then
+  echo "[startup] Syncing DAGs from ${dag_gcs_bucket}..."
+  mkdir -p "${dags_dir}"
+  gsutil rsync -r "${dag_gcs_bucket}" "${dags_dir}"
+  chmod -R 755 "${dags_dir}"
+fi
 
+#######################################
+# Airflow environment file
+#######################################
 echo "[startup] Writing /etc/airflow.env..."
 
 cat >/etc/airflow.env <<EOF
@@ -86,31 +89,30 @@ AIRFLOW_HOME=${airflow_home}
 AIRFLOW__CORE__DAGS_FOLDER=${dags_dir}
 AIRFLOW__CORE__EXECUTOR=${airflow_executor}
 AIRFLOW__CORE__LOAD_EXAMPLES=False
-AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=sqlite:///${airflow_home}/airflow.db
+AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=sqlite:////opt/airflow/airflow.db
 AIRFLOW__WEBSERVER__WEB_SERVER_PORT=${airflow_webserver_port}
 EOF
 
-############################
-# Database initialization
-############################
-
-echo "[startup] Initializing Airflow DB (idempotent)..."
-
-export AIRFLOW_HOME
+#######################################
+# Export env for CLI usage
+#######################################
+export AIRFLOW_HOME="${airflow_home}"
 export AIRFLOW__CORE__DAGS_FOLDER="${dags_dir}"
 export AIRFLOW__CORE__EXECUTOR="${airflow_executor}"
 export AIRFLOW__CORE__LOAD_EXAMPLES=False
-export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN="sqlite:///${airflow_home}/airflow.db"
+export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN="sqlite:////opt/airflow/airflow.db"
 export AIRFLOW__WEBSERVER__WEB_SERVER_PORT="${airflow_webserver_port}"
 
+#######################################
+# Initialize DB (idempotent)
+#######################################
+echo "[startup] Initializing Airflow DB..."
 airflow db init || true
 
-############################
-# Admin user
-############################
-
-echo "[startup] Creating admin user (idempotent)..."
-
+#######################################
+# Create admin user (idempotent)
+#######################################
+echo "[startup] Creating admin user..."
 airflow users create \
   --username "${airflow_admin_username}" \
   --password "${airflow_admin_password}" \
@@ -119,13 +121,12 @@ airflow users create \
   --role Admin \
   --email "${airflow_admin_email}" || true
 
-############################
+#######################################
 # systemd services
-############################
-
+#######################################
 echo "[startup] Writing systemd units..."
 
-cat >/etc/systemd/system/airflow-webserver.service <<'EOF'
+cat >/etc/systemd/system/airflow-webserver.service <<EOF
 [Unit]
 Description=Airflow webserver
 After=network.target
@@ -142,7 +143,7 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
 
-cat >/etc/systemd/system/airflow-scheduler.service <<'EOF'
+cat >/etc/systemd/system/airflow-scheduler.service <<EOF
 [Unit]
 Description=Airflow scheduler
 After=network.target
@@ -159,13 +160,16 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
 
+#######################################
+# Start services
+#######################################
+systemctl daemon-reexec
 systemctl daemon-reload
 systemctl enable airflow-webserver airflow-scheduler
 systemctl restart airflow-webserver airflow-scheduler
 
-############################
+#######################################
 # Done
-############################
-
+#######################################
 echo "[startup] Airflow installation complete."
-echo "[startup] Webserver should be reachable on port ${airflow_webserver_port}."
+echo "[startup] Web UI on port ${airflow_webserver_port}"

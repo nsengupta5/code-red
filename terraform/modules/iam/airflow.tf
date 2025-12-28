@@ -38,3 +38,11 @@ resource "google_project_iam_member" "airflow_iam_service_account_user" {
   role    = "roles/iam.serviceAccountUser"
   member  = "serviceAccount:${google_service_account.airflow.email}"
 }
+
+#### Grant Airflow SA access to DAGs bucket ####
+resource "google_storage_bucket_iam_member" "airflow_dag_reader" {
+  bucket = var.airflow_dag_bucket_name
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:${google_service_account.airflow.email}"
+}
+
