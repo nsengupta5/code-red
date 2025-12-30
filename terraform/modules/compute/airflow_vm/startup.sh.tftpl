@@ -73,20 +73,22 @@ fi
 # Sync DAGs from GCS
 #######################################
 
-DAG_BUCKET="airflow-dags-258083003066"
+DAG_BUCKET="${dag_gcs_bucket}"
 
-if [ -n "${DAG_BUCKET}" ]; then
-  echo "[startup] Syncing DAGs from gs://${DAG_BUCKET}..." | tee -a /var/log/airflow-startup.log
+if [ -n "${dag_gcs_bucket}" ]; then
+  echo "[startup] Syncing DAGs from gs://${dag_gcs_bucket}..." | tee -a /var/log/airflow-startup.log
 
   mkdir -p /opt/airflow/dags
 
-  gsutil rsync -r "gs://${DAG_BUCKET}/dags" /opt/airflow/dags \
+  gsutil rsync -r "gs://${dag_gcs_bucket}/dags" /opt/airflow/dags \
     | tee -a /var/log/airflow-startup.log
 
   chmod -R 755 /opt/airflow/dags
 else
-  echo "[startup] No DAG bucket configured; skipping DAG sync" | tee -a /var/log/airflow-startup.log
+  echo "[startup] No DAG bucket configured; skipping DAG sync" \
+    | tee -a /var/log/airflow-startup.log
 fi
+
 
 
 #######################################
