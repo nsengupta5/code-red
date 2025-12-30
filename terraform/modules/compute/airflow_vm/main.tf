@@ -64,12 +64,14 @@ resource "google_compute_instance" "this" {
     scopes = ["https://www.googleapis.com/auth/cloud-platform"]
   }
 
-  metadata = merge(
-    var.instance_metadata,
-    {
-      "startup-script" = local.startup_script
-    }
-  )
+metadata = merge(
+  var.instance_metadata,
+  {
+    startup-script     = local.startup_script
+    startup-script-sha = sha256(local.startup_script)
+  }
+)
+
 
   labels = var.labels
 }

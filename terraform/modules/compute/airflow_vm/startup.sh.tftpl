@@ -70,14 +70,26 @@ if [ "${install_providers_google}" = "true" ]; then
 fi
 
 #######################################
-# Sync DAGs from GCS (optional but recommended)
+# Sync DAGs from GCS
 #######################################
+
+DAG_BUCKET="${dag_gcs_bucket}"
+
 if [ -n "${dag_gcs_bucket}" ]; then
-  echo "[startup] Syncing DAGs from ${dag_gcs_bucket}..."
-  mkdir -p "${dags_dir}"
-  gsutil rsync -r "${dag_gcs_bucket}" "${dags_dir}"
-  chmod -R 755 "${dags_dir}"
+  echo "[startup] Syncing DAGs from gs://${dag_gcs_bucket}..." | tee -a /var/log/airflow-startup.log
+
+  mkdir -p /opt/airflow/dags
+
+  gsutil rsync -r "gs://${dag_gcs_bucket}/dags" /opt/airflow/dags \
+    | tee -a /var/log/airflow-startup.log
+
+  chmod -R 755 /opt/airflow/dags
+else
+  echo "[startup] No DAG bucket configured; skipping DAG sync" \
+    | tee -a /var/log/airflow-startup.log
 fi
+
+
 
 #######################################
 # Airflow environment file
