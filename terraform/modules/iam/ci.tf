@@ -23,3 +23,11 @@ resource "google_service_account_iam_member" "ci_wif_binding" {
   role               = "roles/iam.workloadIdentityUser"
   member             = local.github_principal_set
 }
+
+
+#### Grant CI SA access to DAGs bucket ####
+resource "google_storage_bucket_iam_member" "ci_dag_writer" {
+  bucket = var.airflow_dag_bucket_name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${var.ci_service_account_email}"
+}

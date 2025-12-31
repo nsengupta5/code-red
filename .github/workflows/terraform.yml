@@ -23,6 +23,14 @@ jobs:
           workload_identity_provider: "projects/258083003066/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
           service_account: "terraform-deployer@project-990b8649-da36-4d4c-9d9.iam.gserviceaccount.com"
 
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      # ---- DAG DEPLOY (application) ----
+      - name: Sync Airflow DAGs to GCS
+        run: |
+          gsutil rsync -d -r dags/ gs://airflow-dags-258083003066/
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
