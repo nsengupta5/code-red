@@ -30,6 +30,7 @@ locals {
     airflow_admin_email        = var.airflow_admin_email
     install_providers_google   = var.install_providers_google
     dag_gcs_bucket             = var.dag_gcs_bucket
+    sync_script                = var.sync_script
   })
 }
 

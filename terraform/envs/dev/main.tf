@@ -161,6 +161,8 @@ module "airflow_vm" {
   network_tags = ["airflow-vm"]
 
   dag_gcs_bucket = module.stb_airflow-dags.bucket_name
+  sync_script = file("${path.root}/../../scripts/sync_airflow_dags.sh")
+
 }
 
 
