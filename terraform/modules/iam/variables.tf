@@ -23,3 +23,8 @@ variable "airflow_dag_bucket_name" {
   type        = string
   description = "GCS bucket name that stores Airflow DAGs"
 }
+
+variable "ci_service_account_email" {
+  type        = string
+  description = "Service account used by CI/CD (GitHub Actions)"
+}
