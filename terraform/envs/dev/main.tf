@@ -157,8 +157,10 @@ module "airflow_vm" {
 
   service_account_email  = module.iam.airflow_service_account_email
   airflow_admin_password = local.airflow_admin_password
-
+  airflow_executor = "SequentialExecutor"
+  
   network_tags = ["airflow-vm"]
+  
 
   dag_gcs_bucket = module.stb_airflow-dags.bucket_name
   sync_script = file("${path.root}/../../scripts/sync_airflow_dags.sh")
