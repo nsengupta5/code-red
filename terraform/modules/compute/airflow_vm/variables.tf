@@ -119,3 +119,8 @@ variable "dag_gcs_bucket" {
   type        = string
   description = "GCS bucket containing Airflow DAGs"
 }
+
+variable "sync_script" {
+  type        = string
+  description = "Bash script used to sync Airflow DAGs from GCS"
+}

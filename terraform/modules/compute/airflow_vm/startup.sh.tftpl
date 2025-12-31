@@ -39,6 +39,59 @@ apt-get install -y --no-install-recommends \
   git \
   google-cloud-sdk
 
+
+#######################################
+# DAG sync script (hash-based)
+#######################################
+echo "[startup] Installing DAG sync script..."
+
+cat >/usr/local/bin/sync-airflow-dags.sh <<'EOF'
+${sync_script}
+EOF
+chmod +x /usr/local/bin/sync-airflow-dags.sh
+
+# Provide config to the script via env file
+cat >/etc/airflow-dag-sync.env <<EOF
+DAG_BUCKET_URI=${dag_gcs_bucket}
+DAGS_DIR=${dags_dir}
+EOF
+
+# systemd unit
+cat >/etc/systemd/system/airflow-dag-sync.service <<'EOF'
+[Unit]
+Description=Sync Airflow DAGs from GCS (hash-based)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/airflow-dag-sync.env
+ExecStart=/usr/local/bin/sync-airflow-dags.sh
+EOF
+
+# systemd timer (every 2 minutes; adjust as desired)
+cat >/etc/systemd/system/airflow-dag-sync.timer <<'EOF'
+[Unit]
+Description=Periodic DAG sync from GCS
+
+[Timer]
+OnBootSec=30
+OnUnitActiveSec=2min
+AccuracySec=30s
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+
+systemctl daemon-reload
+systemctl enable --now airflow-dag-sync.timer
+
+# Run once immediately so the first boot gets DAGs right away
+echo "[startup] Running initial DAG sync..."
+systemctl start airflow-dag-sync.service || true
+
+
 #######################################
 # Directory setup
 #######################################
