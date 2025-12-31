@@ -98,6 +98,32 @@ gcloud compute ssh airflow-dev \
 
 Keep this terminal open.
 
+
+## Troubleshooting: SSH Access Breaks After Public IP Change
+
+If you are unable to SSH into the Airflow VM or establish the SSH tunnel, and your **public IP address has changed** (for example, switching networks or restarting your router), the existing firewall rule may no longer allow access.
+
+### Symptom
+- SSH connection times out or is refused
+- Airflow UI tunnel cannot be established
+
+### Cause
+The GCP firewall rule allowing SSH access is restricted to a specific source IP range. When your public IP changes, the rule must be updated.
+
+### Fix
+Update the firewall rule to allow your current public IP:
+
+```bash
+gcloud compute firewall-rules update airflow-ssh \
+  --project project-990b8649-da36-4d4c-9d9 \
+  --source-ranges="${MY_IP}/32"
+```
+
+Where `MY_IP` is your current public IP address (for example, obtained via `curl ifconfig.me`).
+
+After updating the rule, retry the SSH connection or SSH tunnel.
+
+
 ---
 
 ### Step 2: Open the UI in your browser
