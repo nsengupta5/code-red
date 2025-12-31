@@ -76,9 +76,18 @@ variable "python_constraints_version" {
 }
 
 variable "airflow_executor" {
-  type    = string
-  default = "LocalExecutor"
+  type        = string
+  description = "Airflow executor to use"
+
+  validation {
+    condition = (
+      var.airflow_executor == "SequentialExecutor" ||
+      var.airflow_executor != "LocalExecutor"
+    )
+    error_message = "LocalExecutor cannot be used with SQLite. Use SequentialExecutor or configure Postgres/MySQL."
+  }
 }
+
 
 variable "airflow_webserver_port" {
   type    = number
