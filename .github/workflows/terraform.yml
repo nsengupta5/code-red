@@ -26,6 +26,9 @@ jobs:
   terraform:
     runs-on: ubuntu-latest
 
+    outputs:
+      has_changes: ${{ steps.diff.outputs.changes }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,9 +38,6 @@ jobs:
         with:
           workload_identity_provider: "projects/258083003066/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
           service_account: "terraform-deployer@project-990b8649-da36-4d4c-9d9.iam.gserviceaccount.com"
-
-      - name: Setup gcloud
-        uses: google-github-actions/setup-gcloud@v2
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -55,58 +55,117 @@ jobs:
           terraform plan -out=tfplan
           terraform show -json tfplan > plan.json
 
-      - name: Summarize plan
-        if: github.event_name == 'pull_request'
-        id: summary
-        working-directory: terraform/envs/dev
-        run: |
-          ADDS=$(jq '[.resource_changes[] | select(.change.actions | index("create"))] | length' plan.json)
-          CHANGES=$(jq '[.resource_changes[] | select(.change.actions | index("update"))] | length' plan.json)
-          DESTROYS=$(jq '[.resource_changes[] | select(.change.actions | index("delete"))] | length' plan.json)
-
-          cat <<EOF > summary.md
-          ### Terraform Plan Summary
-
-          | Action   | Count |
-          |---------:|------:|
-          | ➕ Create | $ADDS |
-          | ✏️ Update | $CHANGES |
-          | ❌ Delete | $DESTROYS |
-
-          \`\`\`
-          terraform/envs/dev
-          \`\`\`
-          EOF
-
-      - name: Comment plan on PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const body = fs.readFileSync('terraform/envs/dev/summary.md', 'utf8');
-
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body
-            });
-
-
       - name: Detect plan changes
         id: diff
         working-directory: terraform/envs/dev
         run: |
           if jq -e '.resource_changes | length == 0' plan.json; then
             echo "changes=false" >> "$GITHUB_OUTPUT"
-            echo "No infrastructure changes detected."
           else
             echo "changes=true" >> "$GITHUB_OUTPUT"
-            echo "Infrastructure changes detected."
           fi
+
+      - name: Generate plan summary
+        if: github.event_name == 'pull_request'
+        working-directory: terraform/envs/dev
+        run: |
+          ADDS=$(jq '[.resource_changes[] | select(.change.actions | index("create"))] | length' plan.json)
+          UPDATES=$(jq '[.resource_changes[] | select(.change.actions | index("update"))] | length' plan.json)
+          DELETES=$(jq '[.resource_changes[] | select(.change.actions | index("delete"))] | length' plan.json)
+          REPLACES=$(jq '[.resource_changes[] | select(.change.actions | index("delete") and index("create"))] | length' plan.json)
+
+          VM_RECREATION=$(jq '
+            [.resource_changes[]
+              | select(
+                  (.type == "google_compute_instance")
+                  and (.change.actions | index("delete"))
+                )
+            ] | length
+          ' plan.json)
+
+          echo "### Terraform Plan Summary" > summary.md
+          echo "" >> summary.md
+          echo "| Action | Count |" >> summary.md
+          echo "|-------:|------:|" >> summary.md
+          echo "| ➕ Create | $ADDS |" >> summary.md
+          echo "| ✏️ Update | $UPDATES |" >> summary.md
+          echo "| ❌ Delete | $DELETES |" >> summary.md
+          echo "| 🔁 Replace | $REPLACES |" >> summary.md
+          echo "" >> summary.md
+
+          if [ "$VM_RECREATION" -gt 0 ]; then
+            echo "🚨 **DANGER ZONE** 🚨" >> summary.md
+            echo "" >> summary.md
+            echo "**Compute Engine VM recreation detected.**" >> summary.md
+            echo "" >> summary.md
+            echo "- This will restart Airflow services" >> summary.md
+            echo "- SQLite metadata DB is at risk during restarts" >> summary.md
+            echo "- Scheduler downtime is expected" >> summary.md
+            echo "" >> summary.md
+          fi
+
+          echo "\`\`\`" >> summary.md
+          echo "terraform/envs/dev" >> summary.md
+          echo "\`\`\`" >> summary.md
+
+      - name: Upload plan summary
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tf-plan-summary
+          path: terraform/envs/dev/summary.md
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && steps.diff.outputs.changes == 'true'
         working-directory: terraform/envs/dev
         run: terraform apply -auto-approve tfplan
+
+  comment-plan:
+    if: github.event_name == 'pull_request'
+    needs: terraform
+    runs-on: ubuntu-latest
+
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Download plan summary
+        uses: actions/download-artifact@v4
+        with:
+          name: tf-plan-summary
+          path: .
+
+      - name: Comment or update Terraform plan on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('summary.md', 'utf8');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const marker = "### Terraform Plan Summary";
+            const existing = comments.find(c =>
+              c.user.type === "Bot" && c.body.includes(marker)
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }
