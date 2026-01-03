@@ -39,13 +39,18 @@ jobs:
 
       - name: Validate DAGs (parse only)
         run: |
-          AIRFLOW_VERSION=2.8.1
-          PYTHON_VERSION=3.10
-          CONSTRAINT_URL="https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt"
+            export AIRFLOW_HOME="$(mktemp -d)"
+            export AIRFLOW__CORE__LOAD_EXAMPLES=False
 
-          pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "${CONSTRAINT_URL}"
-          airflow dags list -S dags/
-          
+            AIRFLOW_VERSION=2.8.1
+            PYTHON_VERSION=3.10
+            CONSTRAINT_URL="https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt"
+
+            pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "${CONSTRAINT_URL}"
+
+            airflow db init
+            airflow dags list -S dags/
+    
       - name: Sync DAGs to GCS
         if: github.ref == 'refs/heads/main'
         run: |
