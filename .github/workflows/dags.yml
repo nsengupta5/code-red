@@ -32,6 +32,11 @@ jobs:
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+            python-version: "3.10"
+
       - name: Validate DAGs (parse only)
         run: |
           pip install "apache-airflow==2.8.1"
