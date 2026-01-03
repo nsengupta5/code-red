@@ -81,6 +81,13 @@ module "stb_airflow-dags" {
   location   = var.region
 }
 
+module "stb_test-bucket" {
+  source     = "../../modules/buckets"
+  project_id = var.project_id
+  name       = "test-bucket"
+  location   = var.region
+}
+
 #### Define the artifact registry resource ####
 
 module "artifact_registry" {
