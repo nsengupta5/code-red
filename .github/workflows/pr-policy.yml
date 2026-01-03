@@ -1,0 +1,43 @@
+name: PR Policy Checks
+
+on:
+  pull_request:
+
+jobs:
+  dependency-graph:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed paths
+        id: changes
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+
+          echo "$CHANGED"
+
+          has_terraform=false
+          has_dags=false
+          has_docker=false
+
+          for file in $CHANGED; do
+            [[ "$file" == terraform/* || "$file" == modules/* || "$file" == envs/* ]] && has_terraform=true
+            [[ "$file" == dags/* ]] && has_dags=true
+            [[ "$file" == docker/* || "$file" == images/* ]] && has_docker=true
+          done
+
+          echo "terraform=$has_terraform" >> "$GITHUB_OUTPUT"
+          echo "dags=$has_dags" >> "$GITHUB_OUTPUT"
+          echo "docker=$has_docker" >> "$GITHUB_OUTPUT"
+
+      - name: Enforce dependency graph
+        run: |
+          if [[ "${{ steps.changes.outputs.terraform }}" == "true" && "${{ steps.changes.outputs.dags }}" == "true" ]]; then
+            echo "::error::Terraform and DAG changes must not be combined in the same PR."
+            exit 1
+          fi
