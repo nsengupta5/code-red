@@ -1,5 +1,7 @@
-# Enforce compatibility required by google-api-python-client
-google-auth-httplib2>=0.2.0,<1.0.0
+# Constraints aligned with apache-beam[gcp]==2.53.0
 
-# Pin the client version observed in the build
-google-api-python-client==2.183.0
+# Beam-compatible google API client
+google-api-python-client<2.160.0
+
+# Beam-compatible auth helper
+google-auth-httplib2<0.2.0
