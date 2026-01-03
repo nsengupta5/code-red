@@ -36,10 +36,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Guardrail: forbid 'latest' anywhere
+      # 2. Guardrail: forbid 'latest' in runtime consumers
       - name: Enforce no `latest` tag
         run: |
-          if grep -R ":latest" Dockerfile src/ dags/ .github/workflows; then
+          if grep -R ":latest" Dockerfile src/ dags/; then
             echo "::error::Use of 'latest' tag is forbidden. Use immutable tags or 'prod'."
             exit 1
           fi
@@ -63,7 +63,7 @@ jobs:
         run: |
           gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
 
-      # 6. Build image (always)
+      # 6. Build image (PR + main)
       - name: Build Docker image
         run: |
           docker build \
