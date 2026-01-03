@@ -19,18 +19,20 @@ This separation protects the long-lived Airflow VM and keeps CI deterministic.
 
 ---
 
-## Repository layout (simplified)
+## Repository layout (authoritative)
 
 ```text
 .
-├── terraform/          # Terraform root modules
-├── modules/            # Shared Terraform modules
-├── envs/               # Environment-specific Terraform config
-├── scripts/startup/    # VM startup / bootstrap scripts
-├── dags/               # Airflow DAG definitions
-├── docker/             # Dockerfiles and image build context
-├── images/             # Additional image sources
-└── .github/workflows/  # CI workflows
+├── Dockerfile              # Container image definition
+├── requirements.txt        # Image runtime dependencies
+├── src/                    # Image application code
+├── dags/                   # Airflow DAG definitions
+├── terraform/              # Infrastructure as code (Terraform)
+│   ├── envs/               # Environment-specific config
+│   ├── modules/            # Reusable Terraform modules
+│   └── scripts/            # Infra-related helper scripts
+├── docs/                   # Architecture & operations documentation
+└── .github/workflows/      # CI workflows
 ```
 
 ---
@@ -53,22 +55,11 @@ This separation protects the long-lived Airflow VM and keeps CI deterministic.
 
 **Example changes**
 - `terraform/**`
-- `modules/**`
-- `envs/**`
-- `scripts/startup/**`
 
 **What runs**
 - ✅ `terraform.yml` (plan on PR, apply on merge)
 - ❌ `dags.yml`
 - ❌ `docker-build.yml`
-
-**Why**
-- Infrastructure state may change
-- VM lifecycle, IAM, networking, or metadata may be affected
-
-**Safety rails**
-- Apply runs only if the plan has real changes
-- VM recreation is flagged as a danger zone in PR comments
 
 ---
 
@@ -82,21 +73,14 @@ This separation protects the long-lived Airflow VM and keeps CI deterministic.
 - ❌ `terraform.yml`
 - ❌ `docker-build.yml`
 
-**What happens**
-- DAGs are parsed in CI using an ephemeral Airflow instance
-- DAGs are synced to the GCS DAG bucket on merge to `main`
-- The Airflow VM picks up changes via its sync mechanism
-
 ---
 
 ### 3. Docker / runtime changes
 
 **Example changes**
-- `docker/**`
-- `images/**`
 - `Dockerfile`
-- `requirements*.txt`
-- `pyproject.toml`
+- `requirements.txt`
+- `src/**`
 
 **What runs**
 - ✅ `docker-build.yml`
@@ -111,112 +95,19 @@ This repository uses a **two-phase image lifecycle**:
 1. **Build & publish immutable images**
 2. **Explicitly promote a chosen image to `prod`**
 
-This avoids hidden runtime changes and keeps Airflow and Dataflow jobs deterministic.
-
----
-
 ### Step 1: Build the image (Pull Request)
-
-**Trigger**
-- Open a PR that changes Docker-related files
-
-**What happens**
-- `docker-build.yml` runs
-- Image is **built only**
-- Image is **not pushed**
-- No GCP authentication is used
-
-**Why**
-- Validates Dockerfile and build logic
-- Safe for forks and PRs
-- No registry side effects
-
----
+- Image is built only
+- No registry writes
+- No GCP authentication
 
 ### Step 2: Publish the image (merge to `main`)
+- Image is built and pushed
+- Tagged immutably with Git SHA
 
-**Trigger**
-- Merge PR into `main`
-
-**What happens**
-- `docker-build.yml` runs again
-- Image is built and **pushed to Artifact Registry**
-- Image is tagged **immutably** with the Git SHA
-
-Example:
-```
-buggy-oom:4f2a9c1
-```
-
-**What does NOT happen**
-- No `latest` tag is created
-- No image is promoted automatically
-
----
-
-### Step 3: Promote the image (manual, explicit)
-
-**Trigger**
-- Manual run of `image-promote.yml`
-
-**Inputs**
-- `image_sha`: SHA tag to promote
-- `target_tag`: usually `prod`
-
-**What happens**
-- The SHA-tagged image is re-tagged as `prod`
+### Step 3: Promote the image (manual)
+- Explicit promotion via `image-promote.yml`
+- Re-tags SHA → `prod`
 - No rebuild occurs
-
-Result:
-```
-buggy-oom:4f2a9c1   (immutable)
-buggy-oom:prod     (points to chosen SHA)
-```
-
-**Why**
-- Promotion is a conscious decision
-- Rollbacks are trivial (re-promote an older SHA)
-
----
-
-### Step 4: How DAGs reference images
-
-**Option A: Pin to SHA**
-- Fully deterministic
-- Requires DAG change for every update
-
-**Option B: Use `prod` (recommended)**
-- DAGs remain unchanged
-- Promotion controls behavior
-- Rollback requires no DAG change
-
-**Forbidden**
-- `latest` tag (blocked by CI)
-
----
-
-## Pull request behavior
-
-- Terraform runs **plan only**
-- Docker images build but do not push
-- DAGs are parsed but not deployed
-- No infrastructure or runtime mutations occur
-
----
-
-## Merge to main behavior
-
-- Terraform applies **only if changes exist**
-- Docker images are built and pushed (SHA tags)
-- DAGs are synced to GCS
-
----
-
-## Why this matters (Airflow-specific)
-
-- Airflow VM is long-lived
-- SQLite metadata DB is sensitive to restarts
-- Avoiding unnecessary churn improves stability
 
 ---
 
