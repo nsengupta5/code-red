@@ -1,0 +1,57 @@
+name: Airflow DAGs
+
+on:
+  pull_request:
+    paths:
+      - dags/**
+      - .github/workflows/dags.yml
+
+  push:
+    branches: [ "main" ]
+    paths:
+      - dags/**
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  dags:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "projects/258083003066/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
+          service_account: "dags-deployer@project-990b8649-da36-4d4c-9d9.iam.gserviceaccount.com"
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+            python-version: "3.10"
+
+      - name: Validate DAGs (parse only)
+        run: |
+            export AIRFLOW_HOME="$(mktemp -d)"
+            export AIRFLOW__CORE__LOAD_EXAMPLES=False
+
+            AIRFLOW_VERSION=2.8.1
+            PYTHON_VERSION=3.10
+            CONSTRAINT_URL="https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt"
+
+            pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "${CONSTRAINT_URL}"
+
+            airflow db init
+            airflow dags list -S dags/
+    
+      - name: Sync DAGs to GCS
+        if: github.ref == 'refs/heads/main'
+        run: |
+          gsutil -m rsync -r -d dags/ gs://airflow-dags-258083003066/
