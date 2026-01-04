@@ -1,11 +1,6 @@
 resource "google_billing_budget" "project_budget" {
-  provider        = google-beta
   billing_account = var.billing_account_id
-  display_name    = "monthly-budget-${var.project_id}"
-
-# TEMPORARY DIAGNOSTIC: no project filter
-budget_filter {}
-
+  display_name    = "Monthly budget for ${var.project_id}"
 
   amount {
     specified_amount {
@@ -14,12 +9,17 @@ budget_filter {}
     }
   }
 
+  budget_filter {
+    calendar_period         = "MONTH"
+    credit_types_treatment = "INCLUDE_ALL_CREDITS"
+  }
+
   threshold_rules {
     threshold_percent = 0.5
   }
 
   threshold_rules {
-    threshold_percent = 0.8
+    threshold_percent = 0.9
   }
 
   threshold_rules {
@@ -31,6 +31,3 @@ budget_filter {}
     disable_default_iam_recipients = false
   }
 }
-
-
-
