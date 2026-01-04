@@ -16,3 +16,6 @@ output "airflow_service_account_email" {
 #  value = google_service_account.composer.email
 #}
 
+output "billing_alerts_service_account_email" {
+  value = google_service_account.billing_alerts.email
+}
