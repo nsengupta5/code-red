@@ -3,9 +3,9 @@ resource "google_billing_budget" "project_budget" {
   billing_account = var.billing_account_id
   display_name    = "monthly-budget-${var.project_id}"
 
-budget_filter {
-  projects = ["projects/${var.project_number}"]
-}
+# TEMPORARY DIAGNOSTIC: no project filter
+budget_filter {}
+
 
   amount {
     specified_amount {
