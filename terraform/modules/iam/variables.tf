@@ -28,3 +28,8 @@ variable "ci_service_account_email" {
   type        = string
   description = "Service account used by CI/CD (GitHub Actions)"
 }
+
+variable "billing_account_id" {
+  type        = string
+  description = "Billing account ID"
+}
