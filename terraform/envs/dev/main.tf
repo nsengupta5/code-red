@@ -109,6 +109,7 @@ module "services" {
     "monitoring.googleapis.com",
     "secretmanager.googleapis.com",
     "cloudbilling.googleapis.com",
+    "billingbudgets.googleapis.com",
   ]
 }
 
