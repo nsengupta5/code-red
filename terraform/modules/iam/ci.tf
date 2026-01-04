@@ -38,8 +38,8 @@ resource "google_storage_bucket_iam_member" "ci_dag_writer" {
 ############################
 
 
-resource "google_project_iam_member" "ci_billing_admin" {
-  project = var.project_id
+resource "google_billing_account_iam_member" "ci_billing_admin" {
+  billing_account_id = var.billing_account_id
   role    = "roles/billing.admin"
   member  = "serviceAccount:${var.ci_service_account_email}"
 }
