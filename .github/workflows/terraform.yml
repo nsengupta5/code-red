@@ -118,17 +118,19 @@ jobs:
       - name: Terraform Apply (Billing Budgets)
         if: github.ref == 'refs/heads/main' && steps.diff.outputs.changes == 'true'
         working-directory: terraform/envs/dev
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/billing-key.json
-          CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE: ""
-          GOOGLE_GHA_CREDS_PATH: ""
         run: |
           echo "Fetching billing SA key from Secret Manager..."
           gcloud secrets versions access latest \
             --secret=terraform-deployer-key \
-            > "$GOOGLE_APPLICATION_CREDENTIALS"
+            > billing-key.json
 
-          terraform apply -auto-approve tfplan
+          echo "Applying Terraform with billing SA key..."
+          env \
+            GOOGLE_APPLICATION_CREDENTIALS="$PWD/billing-key.json" \
+            CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE="" \
+            GOOGLE_GHA_CREDS_PATH="" \
+            terraform apply -auto-approve tfplan
+
 
 
   comment-plan:
