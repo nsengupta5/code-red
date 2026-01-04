@@ -120,6 +120,8 @@ jobs:
         working-directory: terraform/envs/dev
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/billing-key.json
+          CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE: ""
+          GOOGLE_GHA_CREDS_PATH: ""
         run: |
           echo "Fetching billing SA key from Secret Manager..."
           gcloud secrets versions access latest \
