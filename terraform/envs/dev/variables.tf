@@ -24,7 +24,7 @@ variable "airflow_ui_source_ranges" {
 }
 
 variable "monthly_budget_amount" {
-  description = "Monthly budget amount in USD"
+  description = "Monthly budget amount in GBP"
   type        = number
 }
 
