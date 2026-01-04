@@ -115,13 +115,19 @@ jobs:
           name: tf-plan-summary
           path: terraform/envs/dev/summary.md
 
-      - name: Terraform Apply
+      - name: Terraform Apply (Billing Budgets)
         if: github.ref == 'refs/heads/main' && steps.diff.outputs.changes == 'true'
         working-directory: terraform/envs/dev
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/billing-key.json
         run: |
-          gcloud auth print-access-token >/dev/null && echo "Token OK"
-          gcloud auth describe
+          echo "Fetching billing SA key from Secret Manager..."
+          gcloud secrets versions access latest \
+            --secret=terraform-deployer-key \
+            > "$GOOGLE_APPLICATION_CREDENTIALS"
+
           terraform apply -auto-approve tfplan
+
 
   comment-plan:
     if: github.event_name == 'pull_request'
