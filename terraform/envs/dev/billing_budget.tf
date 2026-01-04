@@ -1,4 +1,5 @@
 resource "google_billing_budget" "project_budget" {
+  provider        = google-beta
   billing_account = var.billing_account_id
   display_name    = "monthly-budget-${var.project_id}"
 
