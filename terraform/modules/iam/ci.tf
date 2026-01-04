@@ -51,5 +51,5 @@ resource "google_billing_account_iam_member" "ci_billing_admin" {
 resource "google_project_iam_member" "ci_secret_manager_admin" {
   project = var.project_id
   role    = "roles/secretmanager.admin"
-  member  = "serviceAccount:${var.ci_service_account_email}}"
+  member  = "serviceAccount:${var.ci_service_account_email}"
 }
