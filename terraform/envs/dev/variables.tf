@@ -2,6 +2,11 @@ variable "project_id" {
   type    = string
 }
 
+variable "project_number" {
+  type        = string
+  description = "GCP project number (required for billing budgets)"
+}
+
 variable "region" {
   type    = string
   default = "us-central1"
