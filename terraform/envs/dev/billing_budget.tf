@@ -3,9 +3,9 @@ resource "google_billing_budget" "project_budget" {
   billing_account = var.billing_account_id
   display_name    = "monthly-budget-${var.project_id}"
 
-  budget_filter {
-    projects = ["projects/${var.project_id}"]
-  }
+budget_filter {
+  projects = ["projects/${var.project_number}"]
+}
 
   amount {
     specified_amount {
@@ -31,3 +31,6 @@ resource "google_billing_budget" "project_budget" {
     disable_default_iam_recipients = false
   }
 }
+
+
+
