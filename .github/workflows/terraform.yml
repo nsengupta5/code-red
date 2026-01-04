@@ -118,7 +118,10 @@ jobs:
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && steps.diff.outputs.changes == 'true'
         working-directory: terraform/envs/dev
-        run: terraform apply -auto-approve tfplan
+        run: |
+          gcloud auth print-access-token >/dev/null && echo "Token OK"
+          gcloud auth describe
+          terraform apply -auto-approve tfplan
 
   comment-plan:
     if: github.event_name == 'pull_request'
