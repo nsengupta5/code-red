@@ -110,6 +110,7 @@ module "services" {
     "secretmanager.googleapis.com",
     "cloudbilling.googleapis.com",
     "billingbudgets.googleapis.com",
+    "orgpolicy.googleapis.com",
   ]
 }
 
