@@ -35,3 +35,20 @@ resource "google_project_iam_member" "cfv2_compute_artifact_writer" {
   role    = "roles/artifactregistry.writer"
   member  = "serviceAccount:${local.compute_default_sa}"
 }
+
+
+locals {
+  cloudbuild_service_account = "${var.project_number}@cloudbuild.gserviceaccount.com"
+}
+
+resource "google_project_iam_member" "cloudbuild_builder" {
+  project = var.project_id
+  role    = "roles/cloudbuild.builds.builder"
+  member  = "serviceAccount:${local.cloudbuild_service_account}"
+}
+
+resource "google_project_iam_member" "cloudbuild_artifact_writer" {
+  project = var.project_id
+  role    = "roles/artifactregistry.writer"
+  member  = "serviceAccount:${local.cloudbuild_service_account}"
+}
