@@ -114,6 +114,8 @@ module "services" {
     "cloudbilling.googleapis.com",
     "billingbudgets.googleapis.com",
     "orgpolicy.googleapis.com",
+    "eventarc.googleapis.com",
+    "cloudfunctions.googleapis.com",
   ]
 }
 
