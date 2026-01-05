@@ -145,6 +145,22 @@ Billing budget alerts are delivered via Pub/Sub and forwarded to Slack by a
 dedicated Cloud Function. The Slack webhook URL is stored in Secret Manager and
 accessed at runtime by the function service account.
 
+Note: Cloud Functions v2 build IAM requirements (restricted projects)
+The default Compute Engine service account must have:
+roles/logging.logWriter,
+roles/storage.objectViewer,
+roles/artifactregistry.reader,
+roles/artifactregistry.writer.
+
+This is required for Cloud Build workers to:
+- fetch staged function sources
+- emit build logs
+- pull and push Artifact Registry cache images
+
+Failure to grant these roles results in opaque build failures.
+
+Permissioned set here: terraform/envs/dev/cloudfunctions_build_iam.tf
+
 ---
 
 ## Dashboards
