@@ -1,3 +1,5 @@
+# Billing alert Cloud Function to send notifications to Slack via webhook.
+
 import base64
 import json
 import logging
