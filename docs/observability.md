@@ -139,6 +139,14 @@ Then:
 
 ---
 
+## Billing Budget → Slack Alerts
+
+Billing budget alerts are delivered via Pub/Sub and forwarded to Slack by a
+dedicated Cloud Function. The Slack webhook URL is stored in Secret Manager and
+accessed at runtime by the function service account.
+
+---
+
 ## Dashboards
 
 ### Dashboard: *Data Platform – Compute Health*
