@@ -49,6 +49,7 @@ resource "google_cloudfunctions2_function" "billing_alerts" {
     event_type     = "google.cloud.pubsub.topic.v1.messagePublished"
     pubsub_topic   = var.pubsub_topic
     retry_policy   = "RETRY_POLICY_RETRY"
+    service_account_email   = var.service_account_email
   }
 }
 
