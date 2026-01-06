@@ -13,17 +13,17 @@ class CustomOptions(PipelineOptions):
         parser.add_argument(
             "--input",
             required=True,
-            help="GCS path to input CSV files (e.g. gs://bucket/input/*.csv)"
+            help="GCS path to input CSV files (e.g. gs://bucket/input/*.csv)",
         )
         parser.add_argument(
             "--output_table",
             required=True,
-            help="BigQuery table spec for valid rows: project:dataset.table"
+            help="BigQuery table spec for valid rows: project:dataset.table",
         )
         parser.add_argument(
             "--error_table",
             required=False,
-            help="BigQuery table spec for bad rows: project:dataset.bad_rows"
+            help="BigQuery table spec for bad rows: project:dataset.bad_rows",
         )
 
 
@@ -39,12 +39,12 @@ def parse_csv_safe(line):
         yield pvalue.TaggedOutput(
             "good",
             {
-                "sheep_id": fields[0],          # STRING
-                "breed": fields[1],             # STRING
-                "colour": fields[2],            # STRING
-                "weight": float(fields[3]),     # FLOAT
+                "sheep_id": fields[0],  # STRING
+                "breed": fields[1],  # STRING
+                "colour": fields[2],  # STRING
+                "weight": float(fields[3]),  # FLOAT
                 "preference_score": float(fields[4]),  # FLOAT
-            }
+            },
         )
 
     except Exception as e:
@@ -53,9 +53,8 @@ def parse_csv_safe(line):
             {
                 "raw_line": line,
                 "error": str(e),
-            }
+            },
         )
-
 
 
 def run():
@@ -67,13 +66,8 @@ def run():
     with beam.Pipeline(options=pipeline_options) as p:
         parsed = (
             p
-            | "ReadCSV" >> ReadFromText(
-                custom_options.input,
-                skip_header_lines=1
-            )
-            | "ParseCSV" >> beam.ParDo(parse_csv_safe).with_outputs(
-                "good", "bad"
-            )
+            | "ReadCSV" >> ReadFromText(custom_options.input, skip_header_lines=1)
+            | "ParseCSV" >> beam.ParDo(parse_csv_safe).with_outputs("good", "bad")
         )
 
         # Write valid rows to BigQuery

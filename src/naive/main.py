@@ -37,17 +37,17 @@ def run(argv=None):
     parser.add_argument(
         "--input",
         required=True,
-        help="GCS path to input CSV file (e.g. gs://bucket/input/file.csv)"
+        help="GCS path to input CSV file (e.g. gs://bucket/input/file.csv)",
     )
     parser.add_argument(
         "--output_table",
         required=True,
-        help="BigQuery table spec for valid rows: project:dataset.table"
+        help="BigQuery table spec for valid rows: project:dataset.table",
     )
     parser.add_argument(
         "--error_table",
         required=False,
-        help="BigQuery table spec for bad rows: project:dataset.bad_rows"
+        help="BigQuery table spec for bad rows: project:dataset.bad_rows",
     )
     args = parser.parse_args(argv)
 
@@ -66,7 +66,6 @@ def run(argv=None):
 
     # Read the file line by line from memory
     lines = content.splitlines()
-    header = lines[0]
     data_lines = lines[1:]
 
     for line in data_lines:
