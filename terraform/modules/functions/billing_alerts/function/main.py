@@ -34,7 +34,13 @@ def format_slack_message(payload: dict) -> dict:
     cost = payload.get("costAmount", "unknown")
     budget = payload.get("budgetAmount", "unknown")
     currency = payload.get("currencyCode", "")
-    threshold = payload.get("alertThresholdExceeded", "unknown")
+    threshold = data.get("alertThresholdExceeded")
+
+    threshold_text = (
+        str(threshold) if threshold is not None else "not provided by billing API"
+    )
+
+
 
     text = (
         f":warning: *GCP Billing Alert*\n"

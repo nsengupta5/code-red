@@ -161,6 +161,44 @@ Failure to grant these roles results in opaque build failures.
 
 Permissioned set here: terraform/envs/dev/cloudfunctions_build_iam.tf
 
+### Cloud Functions Gen 2 invocation model (important)
+
+The billing alert Slack integration is implemented using Cloud Functions Gen 2, which internally runs on Cloud Run and is triggered via Eventarc from Pub/Sub.
+
+For Pub/Sub-triggered Gen 2 functions, Cloud Run must allow unauthenticated invocation (roles/run.invoker granted to allUsers). This is required because Eventarc does not attach an end-user authentication token when delivering events, and Cloud Run will otherwise reject the request before the function code executes.
+
+This configuration does not expose a public HTTP endpoint in practice:
+
+The function has no externally advertised URL
+
+Ingress is restricted to internal Google infrastructure
+
+Only Eventarc can reach the service
+
+No user or workload can invoke the function directly without going through Pub/Sub
+
+This is a documented and recommended pattern for Pub/Sub-triggered Cloud Functions Gen 2 and should not be removed, as doing so will silently break event delivery.
+
+Optional (but very good) follow-up
+
+Right after that section, you may want to add a short “Do not remove” warning box, e.g.:
+
+⚠️ Do not remove allUsers → roles/run.invoker from this service
+Removing this binding will cause Pub/Sub events to be rejected with The request was not authenticated, even though IAM roles appear correct.
+
+
+### Billing budget alert payload nuances
+
+Google Cloud Billing Budget notifications do not always include a threshold value in their event payloads. Depending on the alert type (for example, forecasted spend, actual spend, or monthly reset conditions), the field alertThresholdExceeded may be omitted entirely by the Billing API.
+
+To ensure alerts remain accurate and do not infer or misrepresent billing data, the Slack notification logic preserves the payload faithfully. When a threshold value is not present, the alert will explicitly display:
+
+Threshold exceeded: not provided by billing API
+
+This behaviour is expected and intentional. It reflects upstream API variability rather than an error in the alerting system, and ensures contributors and operators understand when information is unavailable rather than silently guessed.
+
+Billing alerts are delivered with at-least-once semantics, so duplicate notifications may occur. This is normal for Pub/Sub-based delivery and is preferred over the risk of missing cost-related alerts.
+
 ---
 
 ## Dashboards
