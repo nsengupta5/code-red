@@ -38,6 +38,8 @@ resource "google_cloudfunctions2_function" "billing_alerts" {
     available_memory = "256Mi"
     timeout_seconds = 60
 
+    ingress_settings = "ALLOW_INTERNAL_ONLY"
+
     environment_variables = {
       SLACK_WEBHOOK_SECRET_NAME = var.slack_webhook_secret_name
       PROJECT_ID               = var.project_id
