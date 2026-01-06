@@ -1,6 +1,10 @@
 variable "project_id" {
   type    = string
-  default = "project-990b8649-da36-4d4c-9d9"
+}
+
+variable "project_number" {
+  type        = string
+  description = "GCP project number (required for billing budgets)"
 }
 
 variable "region" {
@@ -23,3 +27,14 @@ variable "airflow_ui_source_ranges" {
   type        = list(string)
   description = "CIDRs allowed to access Airflow UI and SSH"
 }
+
+variable "monthly_budget_amount" {
+  description = "Monthly budget amount in GBP"
+  type        = number
+}
+
+variable "billing_account_id" {
+  type        = string
+  description = "Billing account ID"
+}
+

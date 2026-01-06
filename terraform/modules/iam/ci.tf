@@ -31,3 +31,25 @@ resource "google_storage_bucket_iam_member" "ci_dag_writer" {
   role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${var.ci_service_account_email}"
 }
+
+
+############################
+# GitHub Actions -> Grant CI Service Account access to Billing Account
+############################
+
+
+resource "google_billing_account_iam_member" "ci_billing_admin" {
+  billing_account_id = var.billing_account_id
+  role    = "roles/billing.admin"
+  member  = "serviceAccount:${var.ci_service_account_email}"
+}
+
+############################
+# GitHub Actions -> Grant CI Service Account access to Secret Manager (so that it can grant access to secrets)
+############################
+
+resource "google_project_iam_member" "ci_secret_manager_admin" {
+  project = var.project_id
+  role    = "roles/secretmanager.admin"
+  member  = "serviceAccount:${var.ci_service_account_email}"
+}

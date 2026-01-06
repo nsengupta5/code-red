@@ -3,8 +3,11 @@ FROM gcr.io/dataflow-templates-base/python3-template-launcher-base
 WORKDIR /template
 
 # Copy requirements first (better caching)
-COPY src/dataflow/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY src/dataflow/requirements.txt src/dataflow/constraints.txt ./
+RUN pip install \
+    --no-cache-dir \
+    -r src/dataflow/requirements.txt \
+    --constraint src/dataflow/constraints.txt
 
 # Copy your pipeline code
 COPY src/dataflow/ ./src/dataflow/

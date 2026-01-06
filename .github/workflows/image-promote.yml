@@ -1,0 +1,53 @@
+name: Promote Docker Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_sha:
+        description: "Git SHA tag to promote"
+        required: true
+      target_tag:
+        description: "Target tag (e.g. prod)"
+        required: true
+        default: "prod"
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  PROJECT_ID: project-990b8649-da36-4d4c-9d9
+  REGION: us-central1
+  REPOSITORY: buggy-python
+  IMAGE_NAME: buggy-oom
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/258083003066/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: ci-artifact-publisher@project-990b8649-da36-4d4c-9d9.iam.gserviceaccount.com
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker auth
+        run: |
+          gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+
+      - name: Promote image
+        run: |
+          SRC=${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE_NAME}:${{ inputs.image_sha }}
+          DEST=${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE_NAME}:${{ inputs.target_tag }}
+
+          docker pull $SRC
+          docker tag $SRC $DEST
+          docker push $DEST
+
+      - name: Output promoted image
+        run: |
+          echo "Promoted $SRC → $DEST"

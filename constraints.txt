@@ -1,0 +1,7 @@
+# Constraints aligned with apache-beam[gcp]==2.53.0
+
+# Beam-compatible google API client
+google-api-python-client<2.160.0
+
+# Beam-compatible auth helper
+google-auth-httplib2<0.2.0

@@ -13,14 +13,17 @@ terraform {
 
 
 provider "google" {
-  project = var.project_id
-  region  = var.region
+  project               = var.project_id
+  region                = var.region
+  billing_project       = var.project_id
+  user_project_override = true
 }
 
-
 provider "google-beta" {
-  project = var.project_id
-  region  = var.region
+  project               = var.project_id
+  region                = var.region
+  billing_project       = var.project_id
+  user_project_override = true
 }
 
 
@@ -47,6 +50,7 @@ module "iam" {
   wif_pool_id        = "github-pool"
   airflow_dag_bucket_name = module.stb_airflow-dags.bucket_name
   ci_service_account_email = "terraform-deployer@project-990b8649-da36-4d4c-9d9.iam.gserviceaccount.com"
+  billing_account_id = "01292C-DA6EA4-62AD48"
 
 }
 
@@ -107,6 +111,11 @@ module "services" {
     "logging.googleapis.com",
     "monitoring.googleapis.com",
     "secretmanager.googleapis.com",
+    "cloudbilling.googleapis.com",
+    "billingbudgets.googleapis.com",
+    "orgpolicy.googleapis.com",
+    "eventarc.googleapis.com",
+    "cloudfunctions.googleapis.com",
   ]
 }
 
