@@ -53,7 +53,7 @@ resource "google_cloudfunctions2_function" "billing_alerts" {
   }
 }
 
-# -------------------------------------------------------------------
+# --------------------------------------------------------------------
 # Storage bucket for function source
 # -------------------------------------------------------------------
 resource "google_storage_bucket" "function_source" {
