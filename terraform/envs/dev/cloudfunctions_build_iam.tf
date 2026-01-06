@@ -61,10 +61,11 @@ resource "google_project_iam_member" "cloudbuild_artifact_writer" {
 # -------------------------------------------------------------------
 
 resource "google_cloud_run_service_iam_member" "billing_alerts_invoker" {
-  service  = google_cloudfunctions2_function.billing_alerts.name
+  service  = module.billing_alerts_function.cloud_run_service_name
   location = var.region
   project  = var.project_id
 
   role   = "roles/run.invoker"
   member = "allUsers"
 }
+
