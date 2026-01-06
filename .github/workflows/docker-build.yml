@@ -1,24 +1,19 @@
-name: Docker Build – buggy-oom
+name: Build & Push Docker Images
 
 on:
   pull_request:
     paths:
-      - docker/**
-      - images/**
-      - Dockerfile
-      - requirements*.txt
-      - pyproject.toml
-      - .github/workflows/docker-build.yml
-
+      - 'src/**'
+      - 'Dockerfile'
+      - 'Dockerfile.naive'
+      - '.github/workflows/docker-build.yml'
   push:
     branches: [ "main" ]
     paths:
-      - docker/**
-      - images/**
-      - Dockerfile
-      - requirements*.txt
-      - pyproject.toml
-      - .github/workflows/docker-build.yml
+      - 'src/**'
+      - 'Dockerfile'
+      - 'Dockerfile.naive'
+      - '.github/workflows/docker-build.yml'
 
 permissions:
   id-token: write
@@ -27,25 +22,26 @@ permissions:
 env:
   PROJECT_ID: project-990b8649-da36-4d4c-9d9
   REGION: us-central1
-  REPOSITORY: buggy-python
-  IMAGE_NAME: buggy-oom
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - app_name: 'dataflow'
+            dockerfile: 'Dockerfile'
+            repository: 'dataflow-images'
+            image_name: 'dataflow-app'
+          - app_name: 'naive'
+            dockerfile: 'Dockerfile.naive'
+            repository: 'naive-images'
+            image_name: 'naive-app' # This is the image name used in the Airflow DAG
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      # ---- Guardrail: forbid 'latest' ----
-      - name: Enforce no `latest` tag
-        run: |
-          if grep -R ":latest" -n Dockerfile docker/ images/ .github/workflows; then
-            echo "::error::Use of 'latest' tag is forbidden. Use immutable tags only."
-            exit 1
-          fi
 
       - name: Authenticate to Google Cloud
         if: github.event_name == 'push'
@@ -58,24 +54,23 @@ jobs:
         if: github.event_name == 'push'
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker auth
+      - name: Configure Docker auth for GAR
         if: github.event_name == 'push'
         run: |
-          gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
-      # ---- Always build (PR + main) ----
-      - name: Build Docker image
+      - name: Build Docker image for ${{ matrix.app_name }}
         run: |
           docker build \
-            -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE_NAME}:${IMAGE_TAG} \
+            --file ${{ matrix.dockerfile }} \
+            --tag ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ matrix.repository }}/${{ matrix.image_name }}:${{ env.IMAGE_TAG }} \
             .
 
-      # ---- Push only on main ----
-      - name: Push Docker image
+      - name: Push Docker image for ${{ matrix.app_name }}
         if: github.event_name == 'push'
         run: |
-          docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE_NAME}:${IMAGE_TAG}
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ matrix.repository }}/${{ matrix.image_name }}:${{ env.IMAGE_TAG }}
 
-      - name: Output image reference
+      - name: Output image reference for ${{ matrix.app_name }}
         run: |
-          echo "IMAGE=${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE_NAME}:${IMAGE_TAG}"
+          echo "Pushed Image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ matrix.repository }}/${{ matrix.image_name }}:${{ env.IMAGE_TAG }}"

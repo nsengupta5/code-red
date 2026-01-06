@@ -4,11 +4,6 @@ from airflow.providers.google.cloud.operators.cloud_run import (
 )
 from datetime import datetime
 
-# This DAG requires the Google Cloud provider to be installed in your Airflow environment:
-# pip install apache-airflow-providers-google
-#
-# It executes a job on Google Cloud Run.
-#
 # Prerequisites:
 # 1. Enable the Cloud Run Admin API in your GCP project.
 # 2. Ensure the Airflow service account has the 'roles/run.admin' permission
@@ -26,7 +21,6 @@ with DAG(
     # Define Airflow Variables for gcp_project_id, gcp_location, and gar_repository
     # to make this DAG configurable without changing code.
 ) as dag:
-
     # --- GCP Configuration ---
     GCP_PROJECT_ID = (
         "{{ var.value.get('gcp_project_id', 'project-990b8649-da36-4d4c-9d9') }}"
@@ -55,3 +49,4 @@ with DAG(
         ],
         gcp_conn_id="google_cloud_default",  # Assumes a default GCP connection
     )
+
