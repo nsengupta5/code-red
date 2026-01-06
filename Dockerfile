@@ -6,8 +6,8 @@ WORKDIR /template
 COPY src/dataflow/requirements.txt src/dataflow/constraints.txt ./
 RUN pip install \
     --no-cache-dir \
-    -r src/dataflow/requirements.txt \
-    --constraint src/dataflow/constraints.txt
+    -r requirements.txt \
+    --constraint constraints.txt
 
 # Copy your pipeline code
 COPY src/dataflow/ ./src/dataflow/
