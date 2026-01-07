@@ -52,7 +52,7 @@ chmod +x /usr/local/bin/sync-airflow-dags.sh
 
 # Provide config to the script via env file
 cat >/etc/airflow-dag-sync.env <<EOF
-DAG_BUCKET_URI=${dag_gcs_bucket}
+DAG_BUCKET_URI=gs://${dag_gcs_bucket}
 DAGS_DIR=${dags_dir}
 EOF
 
