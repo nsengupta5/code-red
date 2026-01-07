@@ -44,11 +44,11 @@ provider "google-beta" {
 module "iam" {
   source = "../../modules/iam"
 
-  project_id         = var.project_id
-  github_repo        = "nsengupta5/code-red"
-  wif_project_number = "258083003066"
-  wif_pool_id        = "github-pool"
-  airflow_dag_bucket_name = module.stb_airflow-dags.bucket_name
+  project_id               = var.project_id
+  github_repo              = "nsengupta5/code-red"
+  wif_project_number       = "258083003066"
+  wif_pool_id              = "github-pool"
+  airflow_dag_bucket_name  = module.stb_airflow-dags.bucket_name
   ci_service_account_email = "terraform-deployer@project-990b8649-da36-4d4c-9d9.iam.gserviceaccount.com"
   billing_account_id = "01292C-DA6EA4-62AD48"
   billing_alerts_service_account = "billing-alerts-sa@project-990b8649-da36-4d4c-9d9.iam.gserviceaccount.com"
@@ -86,14 +86,22 @@ module "stb_airflow-dags" {
   location   = var.region
 }
 
-#### Define the artifact registry resource ####
+#### Define the artifact registry resources ####
 
-module "artifact_registry" {
+module "artifact_registry_dataflow" {
   source = "../../modules/artifact_registry"
 
   project_id    = var.project_id
   location      = var.region
-  repository_id = "buggy-python"
+  repository_id = "dataflow-images"
+}
+
+module "artifact_registry_naive" {
+  source = "../../modules/artifact_registry"
+
+  project_id    = var.project_id
+  location      = var.region
+  repository_id = "naive-images"
 }
 
 
@@ -141,11 +149,11 @@ module "bq_animal_facts" {
 module "network" {
   source = "../../modules/network"
 
-  project_id                    = var.project_id
-  region                        = var.region
-  network_name                  = "main-vpc"
-  subnet_name                   = "main-subnet"
-  subnet_cidr                   = "10.10.0.0/16"
+  project_id   = var.project_id
+  region       = var.region
+  network_name = "main-vpc"
+  subnet_name  = "main-subnet"
+  subnet_cidr  = "10.10.0.0/16"
 
   airflow_ui_source_ranges      = var.airflow_ui_source_ranges
   airflow_service_account_email = module.iam.airflow_service_account_email
@@ -168,13 +176,13 @@ module "airflow_vm" {
 
   service_account_email  = module.iam.airflow_service_account_email
   airflow_admin_password = local.airflow_admin_password
-  airflow_executor = "SequentialExecutor"
-  
+  airflow_executor       = "SequentialExecutor"
+
   network_tags = ["airflow-vm"]
-  
+
 
   dag_gcs_bucket = module.stb_airflow-dags.bucket_name
-  sync_script = file("${path.root}/../../scripts/sync_airflow_dags.sh")
+  sync_script    = file("${path.root}/../../scripts/sync_airflow_dags.sh")
 
 }
 

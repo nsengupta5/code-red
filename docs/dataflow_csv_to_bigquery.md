@@ -1,9 +1,10 @@
 # Dataflow CSV → BigQuery Ingestion (Apache Beam, Python)
 
-This document explains how to **build, deploy, and run** the CSV → BigQuery Dataflow job in this repository.
+This document explains how to **build, deploy, and run** the scalable, production-grade CSV → BigQuery Dataflow job in this repository.
 
-The job is implemented using **Apache Beam (Python SDK)** and deployed to **Google Cloud Dataflow** using a **Flex Template**.  
-It is designed to safely process **very large CSV files** from GCS without loading them into memory.
+The job is implemented using **Apache Beam (Python SDK)** and deployed to **Google Cloud Dataflow** using a **Flex Template**. It is designed to safely process **very large CSV files** from GCS without loading them into memory, making it the recommended approach for large-scale data ingestion.
+
+It is orchestrated via an Airflow DAG that uses the `DataflowStartFlexTemplateOperator`.
 
 ---
 
@@ -11,12 +12,11 @@ It is designed to safely process **very large CSV files** from GCS without loadi
 
 **What this job does**
 
-- Reads CSV files from Google Cloud Storage using `ReadFromText`
-- Processes data **line-by-line** (distributed, memory-safe)
-- Writes valid rows to BigQuery
-- Writes malformed rows to a **dead-letter table**
-- Runs on Dataflow using a **custom worker service account**
-- Is packaged and deployed as a **Flex Template**
+- Reads CSV files from Google Cloud Storage using `ReadFromText`.
+- Processes data **line-by-line** in a distributed, memory-safe manner.
+- Writes valid rows to a BigQuery table.
+- Writes malformed rows to a separate **dead-letter table** for error analysis.
+- Is packaged and deployed as a **Flex Template** for easy execution.
 
 ---
 
@@ -25,96 +25,68 @@ It is designed to safely process **very large CSV files** from GCS without loadi
 ```
 .
 ├── Dockerfile
-├── requirements.txt
 ├── src/
-│   └── main.py
-├── dataflow_metadata.json
-├── terraform/
-│   ├── modules/
-│   └── envs/dev/
-└── docs/
-    └── dataflow_csv_to_bigquery.md
+│   └── dataflow/
+│       ├── main.py
+│       └── requirements.txt
+└── dags/
+    └── csv_to_bq.py
 ```
 
 ---
 
 ## Prerequisites
 
-- Dataflow API enabled
-- BigQuery API enabled
-- Artifact Registry API enabled
-- BigQuery dataset created
-- Dataflow worker service account with:
-  - roles/dataflow.worker
-  - roles/storage.objectAdmin
-  - roles/bigquery.dataEditor
-  - roles/bigquery.jobUser
-  - roles/artifactregistry.reader
-
----
-
-## Input Data Layout
-
-Recommended layout:
-
-```
-gs://dummy-data-<PROJECT_NUMBER>/
-└── input/
-    └── sheep_colour_preferences.csv
-```
+- Dataflow API, BigQuery API, and Artifact Registry API enabled.
+- A BigQuery dataset created.
+- A Dataflow worker service account with appropriate permissions (e.g., `roles/dataflow.worker`, `roles/storage.objectAdmin`, `roles/bigquery.dataEditor`).
+- An Airflow environment with the Google Cloud provider installed.
 
 ---
 
 ## Build & Push Docker Image
 
-Dataflow workers require **linux/amd64** images.
+The primary method for building the Docker image is the CI/CD workflow defined in `.github/workflows/docker-build.yml`. This workflow builds an image and pushes it to the `dataflow-images` GAR repository.
+
+For manual testing, you can use a command like this (requires `docker`):
 
 ```bash
-docker buildx build \
+# Replace <PROJECT_ID> with your GCP Project ID
+docker build \
+  -f Dockerfile \
+  -t us-central1-docker.pkg.dev/<PROJECT_ID>/dataflow-images/dataflow-app:latest \
   --platform linux/amd64 \
-  -t us-central1-docker.pkg.dev/<PROJECT_ID>/buggy-python/buggy-oom:latest \
-  --push .
+  .
 ```
 
 ---
 
 ## Build the Flex Template
 
+After the Docker image is pushed to GAR, you must build the Flex Template specification file and upload it to GCS.
+
 ```bash
+# Replace <PROJECT_ID> and <GCS_STAGING_BUCKET>
 gcloud dataflow flex-template build \
-  gs://dataflow-staging-<PROJECT_NUMBER>/templates/buggy-python-built.json \
-  --image us-central1-docker.pkg.dev/<PROJECT_ID>/buggy-python/buggy-oom:latest \
+  gs://<GCS_STAGING_BUCKET>/templates/dataflow-app.json \
+  --image "us-central1-docker.pkg.dev/<PROJECT_ID>/dataflow-images/dataflow-app:latest" \
   --sdk-language PYTHON \
-  --metadata-file dataflow_metadata.json \
   --project <PROJECT_ID>
 ```
+*Note: The `--metadata-file` flag can be used if you have one, but is not required for this template.*
 
 ---
 
-## Run the Dataflow Job
+## Orchestration with Airflow
 
-```bash
-gcloud dataflow flex-template run csv-to-bq-test \
-  --project <PROJECT_ID> \
-  --region us-central1 \
-  --template-file-gcs-location gs://dataflow-staging-<PROJECT_NUMBER>/templates/buggy-python-built.json \
-  --service-account-email dataflow-worker@<PROJECT_ID>.iam.gserviceaccount.com \
-  --num-workers 1 \
-  --temp-location gs://dataflow-temp-<PROJECT_NUMBER>/temp \
-  --staging-location gs://dataflow-staging-<PROJECT_NUMBER>/staging \
-  --parameters input=gs://dummy-data-<PROJECT_NUMBER>/input/sheep_colour_preferences.csv,output_table=<PROJECT_ID>:animal_facts.sheep_colour_preferences,error_table=<PROJECT_ID>:animal_facts.sheep_colour_bad_rows
-```
+The job is executed via the `csv_to_bq_dataflow` DAG, which uses the `DataflowStartFlexTemplateOperator`.
 
----
-
-## Output
-
-- Valid rows written to BigQuery main table
-- Invalid rows written to dead-letter table
-- Job continues even with malformed input rows
+- **Operator:** `DataflowStartFlexTemplateOperator`
+- **Configuration:** The operator is configured using Airflow Variables (`gcp_project_id`, `gcp_location`, etc.) to locate the template file in GCS and provide the necessary job parameters (input GCS path, output BigQuery tables, etc.).
+- **Execution:** When triggered, the DAG makes a request to the Dataflow API to launch the job defined by the Flex Template, passing in all the required runtime parameters.
 
 ---
 
 ## Summary
 
-This setup provides a **production-grade, memory-safe** CSV ingestion pipeline using Apache Beam and Dataflow.
+This setup provides a **production-grade, memory-safe** CSV ingestion pipeline using Apache Beam and Dataflow, orchestrated cleanly through a dedicated Airflow operator.

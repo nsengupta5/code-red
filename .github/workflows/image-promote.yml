@@ -1,4 +1,4 @@
-name: Promote Docker Image
+name: Promote Docker Images
 
 on:
   workflow_dispatch:
@@ -18,12 +18,19 @@ permissions:
 env:
   PROJECT_ID: project-990b8649-da36-4d4c-9d9
   REGION: us-central1
-  REPOSITORY: buggy-python
-  IMAGE_NAME: buggy-oom
 
 jobs:
   promote:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - app_name: 'dataflow'
+            repository: 'dataflow-images'
+            image_name: 'dataflow-app'
+          - app_name: 'naive'
+            repository: 'naive-images'
+            image_name: 'naive-app'
 
     steps:
       - name: Authenticate to Google Cloud
@@ -35,19 +42,24 @@ jobs:
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker auth
+      - name: Configure Docker auth for GAR
         run: |
-          gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
-      - name: Promote image
+      - name: Promote image for ${{ matrix.app_name }}
         run: |
-          SRC=${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE_NAME}:${{ inputs.image_sha }}
-          DEST=${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE_NAME}:${{ inputs.target_tag }}
+          SRC_IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ matrix.repository }}/${{ matrix.image_name }}:${{ inputs.image_sha }}"
+          DEST_IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ matrix.repository }}/${{ matrix.image_name }}:${{ inputs.target_tag }}"
 
-          docker pull $SRC
-          docker tag $SRC $DEST
-          docker push $DEST
+          echo "Pulling source image: $SRC_IMAGE"
+          docker pull "$SRC_IMAGE"
+
+          echo "Tagging for promotion to: $DEST_IMAGE"
+          docker tag "$SRC_IMAGE" "$DEST_IMAGE"
+
+          echo "Pushing promoted image: $DEST_IMAGE"
+          docker push "$DEST_IMAGE"
 
       - name: Output promoted image
         run: |
-          echo "Promoted $SRC → $DEST"
+          echo "Successfully promoted ${{ matrix.app_name }} image to tag: ${{ inputs.target_tag }}"
