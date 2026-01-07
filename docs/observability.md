@@ -302,6 +302,25 @@ A Slack alert is sent
 The alert is recorded in Firestore
 
 
+#### One-time Firestore Role required for DB creation
+
+Firestore database creation requires temporary roles/datastore.owner access.
+This is a one-time operation and the role should be removed immediately after creation.
+
+```
+gcloud projects add-iam-policy-binding project-990b8649-da36-4d4c-9d9 \
+  --member="serviceAccount:terraform-deployer@project-990b8649-da36-4d4c-9d9.iam.gserviceaccount.com" \
+  --role="roles/datastore.owner"
+```
+
+Then once the DB has been created, revoke the role:
+
+```
+gcloud projects remove-iam-policy-binding project-990b8649-da36-4d4c-9d9 \
+  --member="serviceAccount:terraform-deployer@project-990b8649-da36-4d4c-9d9.iam.gserviceaccount.com" \
+  --role="roles/datastore.owner"
+```
+
 
 ---
 
