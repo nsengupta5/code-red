@@ -33,3 +33,8 @@ variable "billing_account_id" {
   type        = string
   description = "Billing account ID"
 }
+
+variable "billing_alerts_service_account" {
+  description = "Service account email used by the billing alerts Cloud Function"
+  type        = string
+}

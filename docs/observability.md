@@ -161,6 +161,167 @@ Failure to grant these roles results in opaque build failures.
 
 Permissioned set here: terraform/envs/dev/cloudfunctions_build_iam.tf
 
+### Cloud Functions Gen 2 invocation model (important)
+
+The billing alert Slack integration is implemented using Cloud Functions Gen 2, which internally runs on Cloud Run and is triggered via Eventarc from Pub/Sub.
+
+For Pub/Sub-triggered Gen 2 functions, Cloud Run must allow unauthenticated invocation (roles/run.invoker granted to allUsers). This is required because Eventarc does not attach an end-user authentication token when delivering events, and Cloud Run will otherwise reject the request before the function code executes.
+
+This configuration does not expose a public HTTP endpoint in practice:
+
+The function has no externally advertised URL
+
+Ingress is restricted to internal Google infrastructure
+
+Only Eventarc can reach the service
+
+No user or workload can invoke the function directly without going through Pub/Sub
+
+This is a documented and recommended pattern for Pub/Sub-triggered Cloud Functions Gen 2 and should not be removed, as doing so will silently break event delivery.
+
+Optional (but very good) follow-up
+
+Right after that section, you may want to add a short “Do not remove” warning box, e.g.:
+
+⚠️ Do not remove allUsers → roles/run.invoker from this service
+Removing this binding will cause Pub/Sub events to be rejected with The request was not authenticated, even though IAM roles appear correct.
+
+
+### Billing budget alert payload nuances
+
+Google Cloud Billing Budget notifications do not always include a threshold value in their event payloads. Depending on the alert type (for example, forecasted spend, actual spend, or monthly reset conditions), the field alertThresholdExceeded may be omitted entirely by the Billing API.
+
+To ensure alerts remain accurate and do not infer or misrepresent billing data, the Slack notification logic preserves the payload faithfully. When a threshold value is not present, the alert will explicitly display:
+
+Threshold exceeded: not provided by billing API
+
+This behaviour is expected and intentional. It reflects upstream API variability rather than an error in the alerting system, and ensures contributors and operators understand when information is unavailable rather than silently guessed.
+
+Billing alerts are delivered with at-least-once semantics, so duplicate notifications may occur. This is normal for Pub/Sub-based delivery and is preferred over the risk of missing cost-related alerts.
+
+
+### Billing budgets and Free Trial credits
+
+Google Cloud Billing Budgets evaluate net cost after credits.
+While Free Trial credits remain, real usage may not trigger budget alerts.
+
+For end-to-end testing in trial projects, we validate the alerting pipeline using a manual Pub/Sub publish.
+Production billing accounts will trigger alerts normally.
+
+
+### Billing Alert Deduplication with Firestore
+
+This document describes how billing alert deduplication is implemented for the
+GCP data platform using **Firestore** to prevent repeated Slack notifications.
+
+---
+
+#### Repeated Slack Alerts Problem Statement
+
+Google Cloud Billing Budgets intentionally re-emit notifications after a threshold
+is exceeded. While this ensures reliability, it can result in:
+
+- Repeated Slack alerts every ~30 minutes
+- Alert fatigue
+- Reduced effectiveness of cost monitoring
+
+A deduplication mechanism is therefore required.
+
+┌─────────────────────────────┐
+│ GCP Billing Budgets API │
+│ (threshold exceeded event) │
+└──────────────┬──────────────┘
+│
+▼
+┌─────────────────────────────┐
+│ Pub/Sub Topic │
+│ billing-budget-alerts │
+└──────────────┬──────────────┘
+│
+▼
+┌─────────────────────────────────────────┐
+│ Cloud Function (Gen 2): billing-alerts │
+│ │
+│ 1. Decode Pub/Sub message │
+│ 2. Extract budget + threshold │
+│ 3. Check Firestore for prior alert │
+│ │
+│ ┌───────────────────────────────┐ │
+│ │ Firestore (Native mode) │ │
+│ │ Collection: billing_budget_ │ │
+│ │ alerts │ │
+│ └──────────────┬────────────────┘ │
+│ │ │
+│ Alert exists? │ │
+│ │ │
+│ YES ───────▶ Suppress notification │
+│ │ │
+│ NO ───────▶ Send Slack message │
+│ │ │
+│ ▼ │
+│ Record alert in Firestore │
+└──────────────────┬─────────────────────┘
+│
+▼
+┌────────────────────┐
+│ Slack Webhook │
+│ #gcp-budget-alerts │
+└────────────────────┘
+
+
+---
+
+#### Deduplication Strategy
+
+- Each **budget + threshold** combination is allowed **one notification per month**
+- Firestore acts as a lightweight, authoritative state store
+- Alerts automatically reset at the start of a new calendar month
+
+This preserves reliability while eliminating noise.
+
+---
+
+#### Runtime Behaviour
+
+When a Pub/Sub message is received:
+
+The Cloud Function decodes the billing payload
+
+The exceeded threshold is extracted
+
+Firestore is queried using the deterministic document ID
+
+If a document exists:
+
+The Slack notification is suppressed
+
+If no document exists:
+
+A Slack alert is sent
+
+The alert is recorded in Firestore
+
+
+#### One-time Firestore Role required for DB creation
+
+Firestore database creation requires temporary roles/datastore.owner access.
+This is a one-time operation and the role should be removed immediately after creation.
+
+```
+gcloud projects add-iam-policy-binding project-990b8649-da36-4d4c-9d9 \
+  --member="serviceAccount:terraform-deployer@project-990b8649-da36-4d4c-9d9.iam.gserviceaccount.com" \
+  --role="roles/datastore.owner"
+```
+
+Then once the DB has been created, revoke the role:
+
+```
+gcloud projects remove-iam-policy-binding project-990b8649-da36-4d4c-9d9 \
+  --member="serviceAccount:terraform-deployer@project-990b8649-da36-4d4c-9d9.iam.gserviceaccount.com" \
+  --role="roles/datastore.owner"
+```
+
+
 ---
 
 ## Dashboards

@@ -52,3 +52,20 @@ resource "google_project_iam_member" "cloudbuild_artifact_writer" {
   role    = "roles/artifactregistry.writer"
   member  = "serviceAccount:${local.cloudbuild_service_account}"
 }
+
+
+# -------------------------------------------------------------------
+# Cloud Functions Gen 2 (Pub/Sub) requires unauthenticated invocation
+# on the underlying Cloud Run service. This is intentional and safe.
+# Do not remove unless changing the trigger model.
+# -------------------------------------------------------------------
+
+resource "google_cloud_run_service_iam_member" "billing_alerts_invoker" {
+  service  = module.billing_alerts_function.cloud_run_service_name
+  location = var.region
+  project  = var.project_id
+
+  role   = "roles/run.invoker"
+  member = "allUsers"
+}
+

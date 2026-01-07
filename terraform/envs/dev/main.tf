@@ -50,7 +50,8 @@ module "iam" {
   wif_pool_id              = "github-pool"
   airflow_dag_bucket_name  = module.stb_airflow-dags.bucket_name
   ci_service_account_email = "terraform-deployer@project-990b8649-da36-4d4c-9d9.iam.gserviceaccount.com"
-  billing_account_id       = "01292C-DA6EA4-62AD48"
+  billing_account_id = "01292C-DA6EA4-62AD48"
+  billing_alerts_service_account = "billing-alerts-sa@project-990b8649-da36-4d4c-9d9.iam.gserviceaccount.com"
 
 }
 
@@ -124,6 +125,7 @@ module "services" {
     "orgpolicy.googleapis.com",
     "eventarc.googleapis.com",
     "cloudfunctions.googleapis.com",
+    "firestore.googleapis.com",
   ]
 }
 
