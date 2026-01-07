@@ -43,9 +43,9 @@ with DAG(
             "--input",
             "gs://dummy-data-258083003066/input/sheep_colour_preferences.csv",
             "--output_table",
-            f"{GCP_PROJECT_ID}:animal_facts.sheep_colour_preferences_naive",
+            f"{GCP_PROJECT_ID}:animal_facts.sheep_colour_preferences",
             "--error_table",
-            f"{GCP_PROJECT_ID}:animal_facts.sheep_colour_bad_rows_naive",
+            f"{GCP_PROJECT_ID}:animal_facts.sheep_colour_bad_rows",
         ],
         gcp_conn_id="google_cloud_default",  # Assumes a default GCP connection
     )
