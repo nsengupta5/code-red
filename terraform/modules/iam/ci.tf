@@ -15,11 +15,27 @@ resource "google_project_iam_member" "ci_artifact_writer" {
 }
 
 ############################
+# CI identity (sync dags)
+############################
+
+resource "google_service_account" "dags_deployer" {
+  project      = var.project_id
+  account_id   = "dags-deployer"
+  display_name = "CI DAGs Deployer"
+}
+
+############################
 # GitHub Actions -> Workload Identity Federation binding
 ############################
 
 resource "google_service_account_iam_member" "ci_wif_binding" {
   service_account_id = google_service_account.ci_artifact_publisher.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = local.github_principal_set
+}
+
+resource "google_service_account_iam_member" "dags_deployer_wif_binding" {
+  service_account_id = google_service_account.dags_deployer.name
   role               = "roles/iam.workloadIdentityUser"
   member             = local.github_principal_set
 }
@@ -30,6 +46,12 @@ resource "google_storage_bucket_iam_member" "ci_dag_writer" {
   bucket = var.airflow_dag_bucket_name
   role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${var.ci_service_account_email}"
+}
+
+resource "google_storage_bucket_iam_member" "dags_deployer_gcs_writer" {
+  bucket = var.airflow_dag_bucket_name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.dags_deployer.email}"
 }
 
 
