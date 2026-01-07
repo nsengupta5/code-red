@@ -2,6 +2,11 @@ output "airflow_service_account_email" {
   value = google_service_account.airflow.email
 }
 
+output "dags_deployer_service_account_email" {
+  description = "Service account email for deploying dags"
+  value       = google_service_account.dags_deployer.email
+}
+
 
 
 ####  Commented out as Composer is too big to set up in a GCP Trail project ####
