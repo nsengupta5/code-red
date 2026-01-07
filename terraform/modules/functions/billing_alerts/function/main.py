@@ -7,6 +7,10 @@ import os
 import requests
 
 from google.cloud import secretmanager
+from google.cloud import firestore
+from datetime import datetime
+
+db = firestore.Client()
 
 logging.basicConfig(level=logging.INFO)
 
@@ -61,16 +65,36 @@ def handle_pubsub(event, context):
 
     if "data" not in event:
         logging.error("No data field in Pub/Sub message")
-        return
+        return "OK"
 
     try:
         decoded = base64.b64decode(event["data"]).decode("utf-8")
         payload = json.loads(decoded)
         logging.info("Decoded billing payload: %s", payload)
-    except Exception as e:
+    except Exception:
         logging.exception("Failed to decode Pub/Sub message")
-        raise e  # trigger retry
+        raise  # trigger retry
 
+    # ---- Extract billing identity ----
+    budget_name = payload.get("budgetDisplayName", "unknown-budget")
+    threshold = payload.get("alertThresholdExceeded")
+
+    if threshold is None:
+        logging.info("No threshold exceeded — skipping notification")
+        return "OK"
+
+    project_id = os.environ.get("PROJECT_ID")
+
+    # ---- Deduplication gate ----
+    if already_notified(project_id, budget_name, threshold):
+        logging.info(
+            "Duplicate alert suppressed: %s threshold=%s",
+            budget_name,
+            threshold,
+        )
+        return "OK"
+
+    # ---- Send Slack notification ----
     webhook_url = get_slack_webhook()
     message = format_slack_message(payload)
 
@@ -84,4 +108,44 @@ def handle_pubsub(event, context):
         )
         raise RuntimeError("Slack webhook call failed")
 
-    logging.info("Slack notification sent successfully")
+    # ---- Record successful notification ----
+    record_notification(project_id, budget_name, threshold, payload)
+
+    logging.info(
+        "Slack notification sent and recorded: %s threshold=%s",
+        budget_name,
+        threshold,
+    )
+
+    return "OK"
+
+
+
+def alert_doc_id(project_id, budget_name, threshold, month):
+    safe_budget = budget_name.replace(" ", "_")
+    return f"{project_id}__{safe_budget}__{threshold}__{month}"
+
+
+def already_notified(project_id, budget_name, threshold):
+    month = datetime.utcnow().strftime("%Y-%m")
+    doc_id = alert_doc_id(project_id, budget_name, threshold, month)
+
+    doc_ref = db.collection("billing_budget_alerts").document(doc_id)
+    return doc_ref.get().exists
+
+
+def record_notification(project_id, budget_name, threshold, data):
+    month = datetime.utcnow().strftime("%Y-%m")
+    doc_id = alert_doc_id(project_id, budget_name, threshold, month)
+
+    db.collection("billing_budget_alerts").document(doc_id).set({
+        "project_id": project_id,
+        "budget_name": budget_name,
+        "threshold": threshold,
+        "currency": data.get("currencyCode"),
+        "cost_amount": data.get("costAmount"),
+        "budget_amount": data.get("budgetAmount"),
+        "notified_at": datetime.utcnow().isoformat() + "Z",
+        "month": month,
+    })
+

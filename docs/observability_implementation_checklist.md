@@ -1,12 +1,12 @@
 # Observability Implementation – Progress
 
 ## Component 1: Budgeting & Cost Control
-- [ ] Terraform resources added
-- [ ] terraform plan passes
-- [ ] terraform apply passes
-- [ ] Budget visible in GCP console
-- [ ] Email alert tested
-- [ ] Pub/Sub message tested
+- [x] Terraform resources added
+- [x] terraform plan passes
+- [x] terraform apply passes
+- [x] Budget visible in GCP console
+- [] Email alert tested (not possible whilst free trial credits exist - adding note in documentation)
+- [x] Pub/Sub message tested
 
 ## Component 2: Logging & Retention
 - [ ] Log bucket created

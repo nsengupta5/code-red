@@ -23,3 +23,9 @@ resource "google_secret_manager_secret_iam_member" "billing_alerts_slack_webhook
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.billing_alerts.email}"
 }
+
+resource "google_project_iam_member" "billing_alerts_firestore" {
+  project = var.project_id
+  role    = "roles/datastore.user"
+  member  = "serviceAccount:${var.billing_alerts_service_account}"
+}

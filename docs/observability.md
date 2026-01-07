@@ -199,6 +199,110 @@ This behaviour is expected and intentional. It reflects upstream API variability
 
 Billing alerts are delivered with at-least-once semantics, so duplicate notifications may occur. This is normal for Pub/Sub-based delivery and is preferred over the risk of missing cost-related alerts.
 
+
+### Billing budgets and Free Trial credits
+
+Google Cloud Billing Budgets evaluate net cost after credits.
+While Free Trial credits remain, real usage may not trigger budget alerts.
+
+For end-to-end testing in trial projects, we validate the alerting pipeline using a manual Pub/Sub publish.
+Production billing accounts will trigger alerts normally.
+
+
+### Billing Alert Deduplication with Firestore
+
+This document describes how billing alert deduplication is implemented for the
+GCP data platform using **Firestore** to prevent repeated Slack notifications.
+
+---
+
+#### Repeated Slack Alerts Problem Statement
+
+Google Cloud Billing Budgets intentionally re-emit notifications after a threshold
+is exceeded. While this ensures reliability, it can result in:
+
+- Repeated Slack alerts every ~30 minutes
+- Alert fatigue
+- Reduced effectiveness of cost monitoring
+
+A deduplication mechanism is therefore required.
+
+┌─────────────────────────────┐
+│ GCP Billing Budgets API │
+│ (threshold exceeded event) │
+└──────────────┬──────────────┘
+│
+▼
+┌─────────────────────────────┐
+│ Pub/Sub Topic │
+│ billing-budget-alerts │
+└──────────────┬──────────────┘
+│
+▼
+┌─────────────────────────────────────────┐
+│ Cloud Function (Gen 2): billing-alerts │
+│ │
+│ 1. Decode Pub/Sub message │
+│ 2. Extract budget + threshold │
+│ 3. Check Firestore for prior alert │
+│ │
+│ ┌───────────────────────────────┐ │
+│ │ Firestore (Native mode) │ │
+│ │ Collection: billing_budget_ │ │
+│ │ alerts │ │
+│ └──────────────┬────────────────┘ │
+│ │ │
+│ Alert exists? │ │
+│ │ │
+│ YES ───────▶ Suppress notification │
+│ │ │
+│ NO ───────▶ Send Slack message │
+│ │ │
+│ ▼ │
+│ Record alert in Firestore │
+└──────────────────┬─────────────────────┘
+│
+▼
+┌────────────────────┐
+│ Slack Webhook │
+│ #gcp-budget-alerts │
+└────────────────────┘
+
+
+---
+
+#### Deduplication Strategy
+
+- Each **budget + threshold** combination is allowed **one notification per month**
+- Firestore acts as a lightweight, authoritative state store
+- Alerts automatically reset at the start of a new calendar month
+
+This preserves reliability while eliminating noise.
+
+---
+
+#### Runtime Behaviour
+
+When a Pub/Sub message is received:
+
+The Cloud Function decodes the billing payload
+
+The exceeded threshold is extracted
+
+Firestore is queried using the deterministic document ID
+
+If a document exists:
+
+The Slack notification is suppressed
+
+If no document exists:
+
+A Slack alert is sent
+
+The alert is recorded in Firestore
+
+
+
 ---
 
 ## Dashboards
