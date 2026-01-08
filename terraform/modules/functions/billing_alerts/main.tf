@@ -22,7 +22,7 @@ resource "google_cloudfunctions2_function" "billing_alerts" {
 
   build_config {
     runtime     = local.runtime
-    entry_point = "handle_pubsub"
+    entry_point = "handle_pubsub_cloudevent"
 
     source {
       storage_source {
