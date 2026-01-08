@@ -17,15 +17,16 @@ from google.cloud import secretmanager
 from google.cloud import firestore
 
 # -------------------------------------------------------------------
-# Global clients
+# Global clients & config
 # -------------------------------------------------------------------
 
-db = firestore.Client()
-
 logging.basicConfig(level=logging.INFO)
+logging.info("Billing alerts function loaded")
 
 PROJECT_ID = os.environ.get("PROJECT_ID")
 SLACK_SECRET_NAME = os.environ.get("SLACK_WEBHOOK_SECRET_NAME")
+
+db = firestore.Client()
 
 # -------------------------------------------------------------------
 # Helpers
@@ -78,7 +79,7 @@ def already_notified(project_id, budget_name, threshold):
     return doc_ref.get().exists
 
 
-def record_notification(project_id, budget_name, threshold, data):
+def record_notification(project_id, budget_name, threshold, payload):
     month = datetime.utcnow().strftime("%Y-%m")
     doc_id = alert_doc_id(project_id, budget_name, threshold, month)
 
@@ -86,9 +87,9 @@ def record_notification(project_id, budget_name, threshold, data):
         "project_id": project_id,
         "budget_name": budget_name,
         "threshold": threshold,
-        "currency": data.get("currencyCode"),
-        "cost_amount": data.get("costAmount"),
-        "budget_amount": data.get("budgetAmount"),
+        "currency": payload.get("currencyCode"),
+        "cost_amount": payload.get("costAmount"),
+        "budget_amount": payload.get("budgetAmount"),
         "notified_at": datetime.utcnow().isoformat() + "Z",
         "month": month,
     })
@@ -108,9 +109,7 @@ def process_billing_payload(payload: dict):
         logging.info("No threshold exceeded — skipping notification")
         return "OK"
 
-    project_id = PROJECT_ID
-
-    if already_notified(project_id, budget_name, threshold):
+    if already_notified(PROJECT_ID, budget_name, threshold):
         logging.info(
             "Duplicate alert suppressed: %s threshold=%s",
             budget_name,
@@ -131,7 +130,7 @@ def process_billing_payload(payload: dict):
         )
         raise RuntimeError("Slack webhook call failed")
 
-    record_notification(project_id, budget_name, threshold, payload)
+    record_notification(PROJECT_ID, budget_name, threshold, payload)
 
     logging.info(
         "Slack notification sent and recorded: %s threshold=%s",
@@ -165,7 +164,7 @@ def handle_pubsub(event, context):
 
 
 # -------------------------------------------------------------------
-# Cloud Functions Gen 2 / Eventarc handler (REQUIRED)
+# Cloud Functions Gen 2 / Eventarc handler (AUTHORITATIVE)
 # -------------------------------------------------------------------
 
 @functions_framework.cloud_event
@@ -188,8 +187,11 @@ def handle_pubsub_cloudevent(cloud_event):
     return process_billing_payload(payload)
 
 
+# -------------------------------------------------------------------
+# Optional HTTP healthcheck
+# -------------------------------------------------------------------
 
 @functions_framework.http
 def healthcheck(request):
-    logging.info("HTTP handler invoked")
+    logging.info("HTTP healthcheck invoked")
     return "ok", 200
