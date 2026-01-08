@@ -186,3 +186,10 @@ def handle_pubsub_cloudevent(cloud_event):
 
     logging.info("Decoded billing payload: %s", payload)
     return process_billing_payload(payload)
+
+
+
+@functions_framework.http
+def healthcheck(request):
+    logging.info("HTTP handler invoked")
+    return "ok", 200
