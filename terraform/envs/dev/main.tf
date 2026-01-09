@@ -192,7 +192,7 @@ module "cloudrun_naive_job" {
   name       = "naive-in-memory-job"
   project_id = var.project_id
   location   = var.region
-  image      = "${var.region}-docker.pkg.dev/${var.project_id}/${module.artifact_registry_naive.repository_id}/naive-app:latest"
+  image      = "${var.region}-docker.pkg.dev/${var.project_id}/${module.artifact_registry_naive.repository_id}/naive-app:ea42a3cfc336a0c5f4e32ac140263afbb67cc191"
 }
 
 
