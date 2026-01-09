@@ -26,27 +26,30 @@ with DAG(
         "{{ var.value.get('gcp_project_id', 'project-990b8649-da36-4d4c-9d9') }}"
     )
     GCP_REGION = "{{ var.value.get('gcp_location', 'us-central1') }}"
-    GAR_REPOSITORY = "{{ var.value.get('gar_repository', 'my-repo') }}"
-    IMAGE_NAME = "naive-app:latest"
+    INPUT_GCS_PATH = "{{ var.value.get('naive_input_gcs_path', 'gs://dummy-data-258083003066/input/sheep_colour_preferences.csv') }}"
+    OUTPUT_TABLE = "{{ var.value.get('naive_output_table', 'animal_facts.sheep_colour_preferences') }}"
+    ERROR_TABLE = "{{ var.value.get('naive_error_table', 'animal_facts.sheep_colour_bad_rows') }}"
 
-    GAR_IMAGE_PATH = (
-        f"{GCP_REGION}-docker.pkg.dev/{GCP_PROJECT_ID}/{GAR_REPOSITORY}/{IMAGE_NAME}"
-    )
 
+    # Then use overrides to pass dynamic arguments
     execute_cloud_run_job = CloudRunExecuteJobOperator(
         task_id="execute_naive_script_on_cloud_run",
         project_id=GCP_PROJECT_ID,
         region=GCP_REGION,
-        job_name="naive-in-memory-job-{{ ds_nodash }}",
-        image=GAR_IMAGE_PATH,
-        arguments=[
-            "--input",
-            "gs://dummy-data-258083003066/input/sheep_colour_preferences.csv",
-            "--output_table",
-            f"{GCP_PROJECT_ID}:animal_facts.sheep_colour_preferences",
-            "--error_table",
-            f"{GCP_PROJECT_ID}:animal_facts.sheep_colour_bad_rows",
-        ],
-        gcp_conn_id="google_cloud_default",  # Assumes a default GCP connection
+        job_name="naive-in-memory-job",  # Must be a pre-existing job
+        overrides={
+            "container_overrides": [
+                {
+                    "args": [
+                        "--input",
+                        INPUT_GCS_PATH,
+                        "--output_table",
+                        GCP_PROJECT_ID + ":" + OUTPUT_TABLE,
+                        "--error_table",
+                        GCP_PROJECT_ID + ":" + ERROR_TABLE,
+                    ],
+                }
+            ],
+        },
+        gcp_conn_id="google_cloud_default",
     )
-
