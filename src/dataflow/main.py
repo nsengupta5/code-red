@@ -28,6 +28,13 @@ class CustomOptions(PipelineOptions):
 
 
 def parse_csv_safe(line):
+    """
+    Parses a CSV line into a dictionary. Yields to 'good' output if successful,
+    otherwise yields to 'bad' output with error details.
+
+    Args:
+        line (str): A line from the CSV file.
+    """
     if not line.strip():
         yield from ()
         return

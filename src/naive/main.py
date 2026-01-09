@@ -11,6 +11,7 @@ It is intended as a baseline or for use with very small datasets.
 The script separates valid rows from malformed rows, loading them into two
 separate BigQuery tables if specified.
 """
+
 import argparse
 import csv
 import io
