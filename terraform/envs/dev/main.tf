@@ -189,11 +189,10 @@ module "airflow_vm" {
 module "cloudrun_naive_job" {
   source = "../../modules/cloudrun"
 
-  name                  = "naive-in-memory-job"
-  project_id            = var.project_id
-  location              = var.region
-  image                 = "${var.region}-docker.pkg.dev/${var.project_id}/${module.artifact_registry_naive.repository_id}/naive-app:latest"
-  service_account_email = module.iam.dataflow_service_account_email
+  name       = "naive-in-memory-job"
+  project_id = var.project_id
+  location   = var.region
+  image      = "${var.region}-docker.pkg.dev/${var.project_id}/${module.artifact_registry_naive.repository_id}/naive-app:latest"
 }
 
 

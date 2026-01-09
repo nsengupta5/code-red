@@ -20,5 +20,6 @@ variable "image" {
 
 variable "service_account_email" {
   type        = string
-  description = "The service account email for the job to run as."
+  description = "The service account email for the job to run as. If not provided, the default compute service account is used."
+  default     = null
 }
