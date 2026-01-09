@@ -124,6 +124,11 @@ variable "install_providers_google" {
   default = true
 }
 
+variable "install_providers_beam" {
+  type    = bool
+  default = true
+}
+
 variable "dag_gcs_bucket" {
   type        = string
   description = "GCS bucket containing Airflow DAGs"

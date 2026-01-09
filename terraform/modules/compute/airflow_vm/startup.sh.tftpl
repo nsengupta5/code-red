@@ -22,6 +22,7 @@ ADMIN_LN="${airflow_admin_lastname}"
 ADMIN_EMAIL="${airflow_admin_email}"
 
 INSTALL_PROVIDERS_GOOGLE="${install_providers_google}"
+INSTALL_PROVIDERS_BEAM="${install_providers_beam}"
 
 # OPTIONAL: set this to empty string if you don’t want DAG sync
 DAG_GCS_BUCKET="${dag_gcs_bucket}"
@@ -120,6 +121,11 @@ pip install "apache-airflow==${airflow_version}" --constraint "${constraints_url
 if [ "${install_providers_google}" = "true" ]; then
   echo "[startup] Installing Google provider..."
   pip install "apache-airflow-providers-google" --constraint "${constraints_url}"
+fi
+
+if [ "${install_providers_beam}" = "true" ]; then
+  echo "[startup] Installing Beam provider..."
+  pip install "apache-airflow-providers-apache-beam" --constraint "${constraints_url}"
 fi
 
 #######################################
