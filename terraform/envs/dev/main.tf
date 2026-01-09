@@ -44,13 +44,13 @@ provider "google-beta" {
 module "iam" {
   source = "../../modules/iam"
 
-  project_id               = var.project_id
-  github_repo              = "nsengupta5/code-red"
-  wif_project_number       = "258083003066"
-  wif_pool_id              = "github-pool"
-  airflow_dag_bucket_name  = module.stb_airflow-dags.bucket_name
-  ci_service_account_email = "terraform-deployer@project-990b8649-da36-4d4c-9d9.iam.gserviceaccount.com"
-  billing_account_id = "01292C-DA6EA4-62AD48"
+  project_id                     = var.project_id
+  github_repo                    = "nsengupta5/code-red"
+  wif_project_number             = "258083003066"
+  wif_pool_id                    = "github-pool"
+  airflow_dag_bucket_name        = module.stb_airflow-dags.bucket_name
+  ci_service_account_email       = "terraform-deployer@project-990b8649-da36-4d4c-9d9.iam.gserviceaccount.com"
+  billing_account_id             = "01292C-DA6EA4-62AD48"
   billing_alerts_service_account = "billing-alerts-sa@project-990b8649-da36-4d4c-9d9.iam.gserviceaccount.com"
 
 }
