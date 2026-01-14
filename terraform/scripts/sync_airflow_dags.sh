@@ -5,6 +5,14 @@ set -euo pipefail
 DAG_BUCKET_URI="${DAG_BUCKET_URI:-}"
 DAGS_DIR="${DAGS_DIR:-/opt/airflow/dags}"
 
+# Fallback: try to load from env file if variable is missing (e.g. manual run)
+if [[ -z "${DAG_BUCKET_URI}" ]] && [[ -f /etc/airflow-dag-sync.env ]]; then
+  echo "[dag-sync] Loading config from /etc/airflow-dag-sync.env..."
+  set -a
+  source /etc/airflow-dag-sync.env
+  set +a
+fi
+
 HASH_FILE="/var/lib/airflow-dag-sync/bucket.md5"
 STATE_DIR="$(dirname "$HASH_FILE")"
 

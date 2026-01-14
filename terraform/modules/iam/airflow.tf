@@ -32,6 +32,12 @@ resource "google_project_iam_member" "airflow_bigquery_data_editor" {
   member  = "serviceAccount:${google_service_account.airflow.email}"
 }
 
+resource "google_project_iam_member" "airflow_bigquery_job_user" {
+  project = var.project_id
+  role    = "roles/bigquery.jobUser"
+  member  = "serviceAccount:${google_service_account.airflow.email}"
+}
+
 #### (Airflow VM launches Dataflow jobs that run under a different service account)
 resource "google_project_iam_member" "airflow_iam_service_account_user" {
   project = var.project_id
