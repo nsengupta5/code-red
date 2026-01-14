@@ -38,8 +38,8 @@ with DAG(
                 "containerSpecGcsPath": TEMPLATE_GCS_PATH,
                 "parameters": {
                     "input": "gs://dummy-data-258083003066/input/sheep_colour_preferences.csv",
-                    "output_table": f"{GCP_PROJECT_ID}:animal_facts.sheep_colour_preferences",
-                    "error_table": f"{GCP_PROJECT_ID}:animal_facts.sheep_colour_bad_rows",
+                    "output_table": f"{GCP_PROJECT_ID}.animal_facts.sheep_colour_preferences",
+                    "error_table": f"{GCP_PROJECT_ID}.animal_facts.sheep_colour_bad_rows",
                 },
                 "environment": {
                     "serviceAccountEmail": DATAFLOW_WORKER_SA,
