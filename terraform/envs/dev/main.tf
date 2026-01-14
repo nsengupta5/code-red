@@ -180,6 +180,9 @@ module "airflow_vm" {
 
   network_tags = ["airflow-vm"]
 
+  # Ensure both Google and Apache Beam providers are installed
+  install_providers_google = true
+  install_providers_beam   = true
 
   dag_gcs_bucket = module.stb_airflow-dags.bucket_name
   sync_script    = file("${path.root}/../../scripts/sync_airflow_dags.sh")
