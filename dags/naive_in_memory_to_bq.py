@@ -44,9 +44,9 @@ with DAG(
                         "--input",
                         INPUT_GCS_PATH,
                         "--output_table",
-                        GCP_PROJECT_ID + ":" + OUTPUT_TABLE,
+                        GCP_PROJECT_ID + "." + OUTPUT_TABLE,
                         "--error_table",
-                        GCP_PROJECT_ID + ":" + ERROR_TABLE,
+                        GCP_PROJECT_ID + "." + ERROR_TABLE,
                     ],
                 }
             ],
