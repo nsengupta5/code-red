@@ -45,6 +45,12 @@ resource "google_project_iam_member" "airflow_run_invoker" {
   member  = "serviceAccount:${google_service_account.airflow.email}"
 }
 
+resource "google_project_iam_member" "airflow_run_developer" {
+  project = var.project_id
+  role    = "roles/run.developer"
+  member  = "serviceAccount:${google_service_account.airflow.email}"
+}
+
 #### Grant Airflow SA access to DAGs bucket ####
 resource "google_storage_bucket_iam_member" "airflow_dag_reader" {
   bucket = var.airflow_dag_bucket_name
