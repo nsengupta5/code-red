@@ -165,26 +165,45 @@ Permissioned set here: terraform/envs/dev/cloudfunctions_build_iam.tf
 
 The billing alert Slack integration is implemented using Cloud Functions Gen 2, which internally runs on Cloud Run and is triggered via Eventarc from Pub/Sub.
 
-For Pub/Sub-triggered Gen 2 functions, Cloud Run must allow unauthenticated invocation (roles/run.invoker granted to allUsers). This is required because Eventarc does not attach an end-user authentication token when delivering events, and Cloud Run will otherwise reject the request before the function code executes.
+Cloud Functions Gen 2 invocation model (important)
 
-This configuration does not expose a public HTTP endpoint in practice:
+Billing budget alerts are delivered using Cloud Functions Gen 2, which run on Cloud Run and are triggered via Eventarc from Pub/Sub.
 
-The function has no externally advertised URL
+Key detail:
+Eventarc invokes Cloud Run services using a Google-managed service account, not an unauthenticated request.
 
-Ingress is restricted to internal Google infrastructure
+As a result, the Cloud Run service must explicitly allow invocation by the Eventarc service agent:
 
-Only Eventarc can reach the service
+service-${PROJECT_NUMBER}@gcp-sa-eventarc.iam.gserviceaccount.com
 
-No user or workload can invoke the function directly without going through Pub/Sub
 
-This is a documented and recommended pattern for Pub/Sub-triggered Cloud Functions Gen 2 and should not be removed, as doing so will silently break event delivery.
+This service account must be granted:
 
-Optional (but very good) follow-up
+roles/run.invoker
 
-Right after that section, you may want to add a short “Do not remove” warning box, e.g.:
 
-⚠️ Do not remove allUsers → roles/run.invoker from this service
-Removing this binding will cause Pub/Sub events to be rejected with The request was not authenticated, even though IAM roles appear correct.
+Without this binding, Pub/Sub events will be delivered to Eventarc but rejected by Cloud Run before function code executes, resulting in log messages such as:
+
+The request was not authenticated
+
+
+This error is misleading — it indicates missing authorization, not missing credentials.
+
+Do not remove Eventarc → Cloud Run invoker permissions
+
+Removing the roles/run.invoker binding for
+service-${PROJECT_NUMBER}@gcp-sa-eventarc.iam.gserviceaccount.com
+will silently break billing alerts.
+
+Symptoms include:
+
+Pub/Sub messages publishing successfully
+
+Cloud Function containers starting
+
+No function logs beyond startup probes
+
+The request was not authenticated warnings in Cloud Run logs
 
 
 ### Billing budget alert payload nuances

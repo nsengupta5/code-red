@@ -18,3 +18,13 @@ module "billing_alerts_function" {
   # Secret Manager secret containing the Slack webhook URL
   slack_webhook_secret_name = "slack-billing-webhook"
 }
+
+
+resource "google_cloud_run_service_iam_member" "billing_alerts_eventarc_invoker" {
+  project  = var.project_id
+  location = var.region
+  service  = module.billing_alerts_function.cloud_run_service_name
+
+  role   = "roles/run.invoker"
+  member = "serviceAccount:service-${var.project_number}@gcp-sa-eventarc.iam.gserviceaccount.com"
+}
