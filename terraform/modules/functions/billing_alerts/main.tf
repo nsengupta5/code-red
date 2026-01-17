@@ -72,3 +72,26 @@ resource "google_storage_bucket_object" "function_zip" {
   bucket = google_storage_bucket.function_source.name
   source = data.archive_file.function_zip.output_path
 }
+
+
+# --------------------------------------------------------------------
+# Ensure Eventarc push identity (billing-alerts-sa) can invoke the underlying Cloud Run service.
+# --------------------------------------------------------------------
+resource "google_cloud_run_service_iam_member" "billing_alerts_invoker" {
+  project  = var.project_id
+  location = var.region
+
+  # For Cloud Functions Gen2, the underlying Cloud Run service name matches the function name.
+  service  = google_cloudfunctions2_function.billing_alerts.name
+
+  role   = "roles/run.invoker"
+  member = "serviceAccount:${var.service_account_email}"
+
+  # Ensure ordering: only apply IAM after the Cloud Run service exists.
+  depends_on = [google_cloudfunctions2_function.billing_alerts]
+
+  # Force re-apply when the function is replaced (prevents “lost IAM after recreate”).
+  lifecycle {
+    replace_triggered_by = [google_cloudfunctions2_function.billing_alerts]
+  }
+}
