@@ -6,7 +6,10 @@ locals {
   dataflow_log_bucket_id = "dataflow-longterm"
   dataflow_sink_name     = "dataflow-to-longterm"
   dataflow_oom_metric    = "dataflow_oom_errors"
+
 }
+
+
 
 # 1) Dedicated log bucket (project-level)
 resource "google_logging_project_bucket_config" "dataflow_longterm" {
@@ -29,12 +32,17 @@ resource.type="dataflow_step"
 EOT
 }
 
+/*
 # 2b) IAM: allow the sink writer to write into the project’s log buckets
-resource "google_project_iam_member" "dataflow_sink_bucket_writer" {
+resource "google_project_iam_binding" "dataflow_sink_bucket_writer" {
   project = var.project_id
   role    = "roles/logging.bucketWriter"
-  member  = google_logging_project_sink.dataflow_to_longterm.writer_identity
+
+  members = [
+    local.dataflow_sink_writer_member,
+  ]
 }
+*/
 
 # 3) Log-based metric (counter) for OOM patterns in Dataflow logs
 resource "google_logging_metric" "dataflow_oom_errors" {
