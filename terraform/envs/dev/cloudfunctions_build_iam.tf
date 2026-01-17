@@ -66,6 +66,6 @@ resource "google_cloud_run_service_iam_member" "billing_alerts_invoker" {
   project  = var.project_id
 
   role   = "roles/run.invoker"
-  member = "allUsers"
+  member = "serviceAccount:${module.iam.billing_alerts_service_account_email}"
 }
 
