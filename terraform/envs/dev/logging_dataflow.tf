@@ -19,7 +19,7 @@ resource "google_logging_project_bucket_config" "dataflow_longterm" {
 
 # 2) Sink that routes Dataflow logs into the dedicated bucket
 resource "google_logging_project_sink" "dataflow_to_longterm" {
-  project                = "projects/${var.project_id}"
+  project                = var.project_id
   name                   = local.dataflow_sink_name
   destination            = "logging.googleapis.com/projects/${var.project_id}/locations/global/buckets/${google_logging_project_bucket_config.dataflow_longterm.bucket_id}"
   unique_writer_identity = true
@@ -38,7 +38,7 @@ resource "google_project_iam_member" "dataflow_sink_bucket_writer" {
 
 # 3) Log-based metric (counter) for OOM patterns in Dataflow logs
 resource "google_logging_metric" "dataflow_oom_errors" {
-  project     = "projects/${var.project_id}"
+  project     = var.project_id
   name        = local.dataflow_oom_metric
   description = "Counts Dataflow worker/job logs that match common out-of-memory patterns (OOMKilled, OutOfMemoryError, MemoryError, etc.)"
 
