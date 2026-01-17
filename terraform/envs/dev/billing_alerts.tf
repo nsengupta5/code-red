@@ -20,6 +20,7 @@ module "billing_alerts_function" {
 }
 
 
+/* This role isn't required as the billing-alerts-sa@project-990b8649-da36-4d4c-9d9.iam.gserviceaccount.com is the account doing the invoking
 resource "google_cloud_run_service_iam_member" "billing_alerts_eventarc_invoker" {
   project  = var.project_id
   location = var.region
@@ -28,3 +29,4 @@ resource "google_cloud_run_service_iam_member" "billing_alerts_eventarc_invoker"
   role   = "roles/run.invoker"
   member = "serviceAccount:service-${var.project_number}@gcp-sa-eventarc.iam.gserviceaccount.com"
 }
+*/
