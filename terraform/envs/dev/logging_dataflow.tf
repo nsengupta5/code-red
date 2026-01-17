@@ -32,17 +32,6 @@ resource.type="dataflow_step"
 EOT
 }
 
-/*
-# 2b) IAM: allow the sink writer to write into the project’s log buckets
-resource "google_project_iam_binding" "dataflow_sink_bucket_writer" {
-  project = var.project_id
-  role    = "roles/logging.bucketWriter"
-
-  members = [
-    local.dataflow_sink_writer_member,
-  ]
-}
-*/
 
 # 3) Log-based metric (counter) for OOM patterns in Dataflow logs
 resource "google_logging_metric" "dataflow_oom_errors" {
