@@ -22,6 +22,8 @@ from google.cloud import firestore
 
 logging.basicConfig(level=logging.INFO)
 logging.info("Billing alerts function loaded")
+logging.info("billing-alerts module imported (startup)")
+
 
 PROJECT_ID = os.environ.get("PROJECT_ID")
 SLACK_SECRET_NAME = os.environ.get("SLACK_WEBHOOK_SECRET_NAME")
@@ -174,6 +176,7 @@ def handle_pubsub_cloudevent(cloud_event):
     This is the authoritative entrypoint in Gen 2.
     """
     logging.info("Received Pub/Sub CloudEvent")
+    logging.info("HANDLER HIT: handle_pubsub_cloudevent")
 
     message = cloud_event.data.get("message", {})
     if "data" not in message:
