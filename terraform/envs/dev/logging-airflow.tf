@@ -17,7 +17,7 @@ resource "google_logging_project_bucket_config" "airflow_longterm" {
   project        = "projects/${var.project_id}"
   location       = "global"
   bucket_id      = local.airflow_log_bucket_id
-  description    = "Trial lab: dedicated bucket for Airflow VM logs (gce_instance scoped)"
+  description    = "Dedicated bucket for Airflow VM logs (gce_instance scoped)"
   retention_days = 30
 }
 
