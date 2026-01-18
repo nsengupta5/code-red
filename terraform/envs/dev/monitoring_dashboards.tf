@@ -102,22 +102,23 @@ resource "google_monitoring_dashboard" "dataflow_dashboard" {
       widgets = [
         # Dataflow aggregated worker utilization (all jobs in us-central1)
         {
-            title = "Aggregated worker utilization (%) – all Dataflow jobs"
+            title = "Active workers - all Dataflow jobs"
             xyChart = {
                 dataSets = [{
                 plotType = "LINE"
                 timeSeriesQuery = {
                     timeSeriesQueryLanguage = <<-MQL
                     fetch dataflow_job
-                    | metric 'dataflow.googleapis.com/job/aggregated_worker_utilization'
+                    | metric 'dataflow.googleapis.com/job/active_worker_instances'
                     | group_by [], mean(val())
                     | every 60s
                     MQL
                 }
                 }]
-                yAxis = { label = "%", scale = "LINEAR" }
+                yAxis = { label = "workers", scale = "LINEAR" }
             }
-            },
+        },
+
 
         # Dataflow memory capacity (all jobs in us-central1)
         {
@@ -150,21 +151,18 @@ resource "google_monitoring_dashboard" "dataflow_dashboard" {
                 dataSets = [{
                 plotType = "LINE"
                 timeSeriesQuery = {
-                    timeSeriesFilter = {
-                    filter = join(" AND ", [
-                        "resource.type=\"dataflow_step\"",
-                        "metric.type=\"logging.googleapis.com/user/dataflow_oom_errors\""
-                    ])
-                    aggregation = {
-                        alignmentPeriod  = "60s"
-                        perSeriesAligner = "ALIGN_DELTA"
-                    }
-                    }
+                    timeSeriesQueryLanguage = <<-MQL
+                    fetch dataflow_job
+                    | metric 'logging.googleapis.com/user/dataflow_oom_errors'
+                    | group_by [], sum(val())
+                    | every 60s
+                    MQL
                 }
                 }]
                 yAxis = { label = "count/min", scale = "LINEAR" }
             }
-            }
+        }
+
       ]
     }
   })
