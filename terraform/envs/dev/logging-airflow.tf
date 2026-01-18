@@ -34,18 +34,13 @@ resource "google_logging_project_sink" "airflow_to_longterm" {
   # - Only entries that look Airflow-related
   #
   # This avoids dumping *all* VM syslog noise into the bucket while still catching common patterns.
-  filter = <<EOT
+
+ filter = <<EOT
 resource.type="gce_instance"
-AND (
-  textPayload:"airflow"
-  OR jsonPayload.message:"airflow"
-  OR textPayload:"gunicorn"
-  OR textPayload:"celery"
-  OR textPayload:"scheduler"
-  OR textPayload:"webserver"
-  OR labels."compute.googleapis.com/resource_name":"airflow"
-)
+AND labels.airflow_component="airflow"
+AND labels.environment="dev"
 EOT
+
 }
 
 ################################################################################
@@ -65,17 +60,19 @@ resource "google_logging_metric" "airflow_vm_errors" {
     display_name = "Airflow VM errors"
   }
 
-  filter = <<EOT
+ filter = <<EOT
 resource.type="gce_instance"
+AND labels.airflow_component="airflow"
 AND severity>=ERROR
 AND (
-  textPayload:"airflow"
-  OR jsonPayload.message:"airflow"
-  OR textPayload:"Broken DAG"
-  OR textPayload:"Traceback"
-  OR textPayload:"ERROR"
+  jsonPayload.message:"Traceback"
+  OR jsonPayload.message:"Broken DAG"
+  OR jsonPayload.message:"ERROR"
+  OR jsonPayload.message:"Exception"
+  OR jsonPayload.message:"Task failed"
 )
 EOT
+
 }
 
 # Counts OOM-ish patterns on the Airflow VM (separate from Dataflow OOM metric)
@@ -93,18 +90,16 @@ resource "google_logging_metric" "airflow_vm_oom_errors" {
 
   filter = <<EOT
 resource.type="gce_instance"
+AND labels.airflow_component="airflow"
 AND severity>=ERROR
 AND (
-  textPayload:"Out of memory"
-  OR textPayload:"OOMKilled"
-  OR textPayload:"Killed process"
-  OR textPayload:"MemoryError"
-  OR jsonPayload.message:"Out of memory"
+  jsonPayload.message:"Out of memory"
   OR jsonPayload.message:"OOMKilled"
   OR jsonPayload.message:"Killed process"
   OR jsonPayload.message:"MemoryError"
 )
 EOT
+
 }
 
 
