@@ -14,7 +14,7 @@ locals {
 # A) Dedicated Cloud Logging bucket for Airflow VM logs
 resource "google_logging_project_bucket_config" "airflow_longterm" {
   # This resource in your environment required the long-form project name
-  project        = "projects/${var.project_id}"
+  project        = var.project_id
   location       = "global"
   bucket_id      = local.airflow_log_bucket_id
   description    = "Dedicated bucket for Airflow VM logs (gce_instance scoped)"
