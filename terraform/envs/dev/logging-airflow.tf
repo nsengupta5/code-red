@@ -1,0 +1,107 @@
+################################################################################
+# Airflow VM logging bucket + sink (+ optional metrics)
+################################################################################
+
+locals {
+  airflow_log_bucket_id = "airflow-longterm"
+  airflow_sink_name     = "airflow-to-longterm"
+
+  # Optional metrics
+  airflow_error_metric = "airflow_vm_errors"
+  airflow_oom_metric   = "airflow_vm_oom_errors"
+}
+
+# A) Dedicated Cloud Logging bucket for Airflow VM logs
+resource "google_logging_project_bucket_config" "airflow_longterm" {
+  # This resource in your environment required the long-form project name
+  project        = "projects/${var.project_id}"
+  location       = "global"
+  bucket_id      = local.airflow_log_bucket_id
+  description    = "Trial lab: dedicated bucket for Airflow VM logs (gce_instance scoped)"
+  retention_days = 30
+}
+
+# B) Sink routing Airflow-related VM logs into the bucket
+resource "google_logging_project_sink" "airflow_to_longterm" {
+  project                = var.project_id
+  name                   = local.airflow_sink_name
+  destination            = "logging.googleapis.com/projects/${var.project_id}/locations/global/buckets/${google_logging_project_bucket_config.airflow_longterm.bucket_id}"
+  unique_writer_identity = true
+
+  # Trial-lab tight-ish scope:
+  # - Only GCE instance logs
+  # - Only entries that look Airflow-related
+  #
+  # This avoids dumping *all* VM syslog noise into the bucket while still catching common patterns.
+  filter = <<EOT
+resource.type="gce_instance"
+AND (
+  textPayload:"airflow"
+  OR jsonPayload.message:"airflow"
+  OR textPayload:"gunicorn"
+  OR textPayload:"celery"
+  OR textPayload:"scheduler"
+  OR textPayload:"webserver"
+  OR labels."compute.googleapis.com/resource_name":"airflow"
+)
+EOT
+}
+
+################################################################################
+# C) Optional metrics (good enough for trial lab)
+################################################################################
+
+# Counts ERROR+ log entries that look Airflow-related (VM-side)
+resource "google_logging_metric" "airflow_vm_errors" {
+  project     = var.project_id
+  name        = local.airflow_error_metric
+  description = "Counts VM logs (gce_instance) that look Airflow-related and are severity>=ERROR"
+
+  metric_descriptor {
+    metric_kind  = "DELTA"
+    value_type   = "INT64"
+    unit         = "1"
+    display_name = "Airflow VM errors"
+  }
+
+  filter = <<EOT
+resource.type="gce_instance"
+AND severity>=ERROR
+AND (
+  textPayload:"airflow"
+  OR jsonPayload.message:"airflow"
+  OR textPayload:"Broken DAG"
+  OR textPayload:"Traceback"
+  OR textPayload:"ERROR"
+)
+EOT
+}
+
+# Counts OOM-ish patterns on the Airflow VM (separate from Dataflow OOM metric)
+resource "google_logging_metric" "airflow_vm_oom_errors" {
+  project     = var.project_id
+  name        = local.airflow_oom_metric
+  description = "Counts VM logs indicating OOM kill / memory exhaustion (gce_instance)"
+
+  metric_descriptor {
+    metric_kind  = "DELTA"
+    value_type   = "INT64"
+    unit         = "1"
+    display_name = "Airflow VM OOM errors"
+  }
+
+  filter = <<EOT
+resource.type="gce_instance"
+AND severity>=ERROR
+AND (
+  textPayload:"Out of memory"
+  OR textPayload:"OOMKilled"
+  OR textPayload:"Killed process"
+  OR textPayload:"MemoryError"
+  OR jsonPayload.message:"Out of memory"
+  OR jsonPayload.message:"OOMKilled"
+  OR jsonPayload.message:"Killed process"
+  OR jsonPayload.message:"MemoryError"
+)
+EOT
+}
