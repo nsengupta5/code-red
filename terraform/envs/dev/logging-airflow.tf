@@ -63,7 +63,6 @@ resource "google_logging_metric" "airflow_vm_errors" {
  filter = <<EOT
 resource.type="gce_instance"
 AND labels.airflow_component="airflow"
-AND severity>=ERROR
 AND (
   jsonPayload.message:"Traceback"
   OR jsonPayload.message:"Broken DAG"
@@ -91,7 +90,6 @@ resource "google_logging_metric" "airflow_vm_oom_errors" {
   filter = <<EOT
 resource.type="gce_instance"
 AND labels.airflow_component="airflow"
-AND severity>=ERROR
 AND (
   jsonPayload.message:"Out of memory"
   OR jsonPayload.message:"OOMKilled"
