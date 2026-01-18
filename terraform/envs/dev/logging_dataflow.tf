@@ -67,9 +67,6 @@ AND NOT (
   OR jsonPayload.message:"kernel-monitor.json"
   OR jsonPayload.message:"log_monitor.go:78"
   OR jsonPayload.message:"Rules:[{Type:temporary Condition: Reason:OOMKilling"
-  OR textPayload:"DF_OOM_TEST_EVENT"
-  OR jsonPayload.message:"DF_OOM_TEST_EVENT"
-
 )
 EOT
 }
