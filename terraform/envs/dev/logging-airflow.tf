@@ -106,3 +106,11 @@ AND (
 )
 EOT
 }
+
+
+# Allow the Airflow VM service account to write logs via Ops Agent
+resource "google_project_iam_member" "airflow_vm_log_writer" {
+  project = var.project_id
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:airflow-vm@project-990b8649-da36-4d4c-9d9.iam.gserviceaccount.com"
+}
