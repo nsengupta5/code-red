@@ -37,7 +37,7 @@ EOT
 resource "google_logging_metric" "dataflow_oom_errors" {
   project     = var.project_id
   name        = local.dataflow_oom_metric
-  description = "Counts Dataflow worker/job logs that match common out-of-memory patterns (OOMKilled, OutOfMemoryError, MemoryError, etc.)"
+  description = "Counts Dataflow logs that match common out-of-memory patterns (OOMKilled, OutOfMemoryError, MemoryError, etc.)"
 
   metric_descriptor {
     metric_kind  = "DELTA"
@@ -46,25 +46,28 @@ resource "google_logging_metric" "dataflow_oom_errors" {
     display_name = "Dataflow OOM errors"
   }
 
-filter = <<EOT
+  filter = <<EOT
 resource.type="dataflow_step"
-AND severity>=ERROR
 AND (
   textPayload:"OutOfMemoryError"
-  OR textPayload:"OOMKilled"
   OR textPayload:"MemoryError"
-  OR (textPayload:"Killed process" AND (textPayload:"out of memory" OR textPayload:"oom"))
-  OR (textPayload:"Container killed" AND (textPayload:"memory" OR textPayload:"OOM"))
-
+  OR textPayload:"OOMKilled"
+  OR (textPayload:"Killed process" AND textPayload:"oom")
   OR jsonPayload.message:"OutOfMemoryError"
-  OR jsonPayload.message:"OOMKilled"
   OR jsonPayload.message:"MemoryError"
-  OR jsonPayload.error:"OutOfMemoryError"
-  OR jsonPayload.error:"OOMKilled"
-  OR jsonPayload.error:"MemoryError"
-  OR jsonPayload.stacktrace:"OutOfMemoryError"
-  OR jsonPayload.stacktrace:"MemoryError"
+  OR jsonPayload.message:"OOMKilled"
+  OR (jsonPayload.message:"Killed process" AND jsonPayload.message:"oom")
+)
+AND NOT (
+  textPayload:"Finish parsing log monitor config file"
+  OR textPayload:"kernel-monitor.json"
+  OR textPayload:"log_monitor.go:78"
+  OR textPayload:"Rules:[{Type:temporary Condition: Reason:OOMKilling"
+  OR jsonPayload.message:"Finish parsing log monitor config file"
+  OR jsonPayload.message:"kernel-monitor.json"
+  OR jsonPayload.message:"log_monitor.go:78"
+  OR jsonPayload.message:"Rules:[{Type:temporary Condition: Reason:OOMKilling"
 )
 EOT
-
 }
+
