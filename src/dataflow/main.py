@@ -1,4 +1,5 @@
 import apache_beam as beam
+import logging
 from apache_beam.options.pipeline_options import PipelineOptions, SetupOptions
 from apache_beam.io import ReadFromText
 from apache_beam.io.gcp.bigquery import WriteToBigQuery
@@ -65,6 +66,11 @@ def parse_csv_safe(line):
 
 
 def run():
+
+    logging.getLogger().setLevel(logging.INFO)
+    logging.error("DF_OOM_TEST_EVENT")
+
+
     pipeline_options = PipelineOptions()
     pipeline_options.view_as(SetupOptions).save_main_session = True
 
