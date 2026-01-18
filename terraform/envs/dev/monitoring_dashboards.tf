@@ -65,25 +65,27 @@ resource "google_monitoring_dashboard" "airflow_vm_dashboard" {
 
         # Airflow OOM log-based metric (your custom metric)
         {
-          title = "Airflow VM OOM errors (log-based metric)"
-          xyChart = {
-            dataSets = [{
-              plotType = "LINE"
-              timeSeriesQuery = {
-                timeSeriesFilter = {
-                  filter = join(" AND ", [
-                    "resource.type=\"global\"",
-                    "metric.type=\"logging.googleapis.com/user/airflow_vm_oom_errors\""
-                  ])
-                  aggregation = {
-                    alignmentPeriod  = "60s"
-                    perSeriesAligner = "ALIGN_DELTA"
-                  }
+            title = "Airflow VM OOM errors (log-based metric)"
+            xyChart = {
+                dataSets = [{
+                plotType = "LINE"
+                timeSeriesQuery = {
+                    timeSeriesFilter = {
+                    filter = join(" AND ", [
+                        "resource.type=\"gce_instance\"",
+                        "resource.labels.instance_id=\"5536934707077466092\"",
+                        "resource.labels.zone=\"us-central1-a\"",
+                        "metric.type=\"logging.googleapis.com/user/airflow_vm_oom_errors\""
+                    ])
+                    aggregation = {
+                        alignmentPeriod  = "60s"
+                        perSeriesAligner = "ALIGN_DELTA"
+                    }
+                    }
                 }
-              }
-            }]
-            yAxis = { label = "count/min", scale = "LINEAR" }
-          }
+                }]
+                yAxis = { label = "count/min", scale = "LINEAR" }
+            }
         }
       ]
     }
