@@ -22,7 +22,8 @@ resource "google_monitoring_dashboard" "airflow_vm_dashboard" {
                 timeSeriesFilter = {
                   filter = join(" AND ", [
                     "resource.type=\"gce_instance\"",
-                    "resource.labels.instance_name=\"airflow-dev\"",
+                    "resource.labels.instance_id=\"5536934707077466092\"",
+                    "resource.labels.zone=\"us-central1-a\"",
                     "metric.type=\"agent.googleapis.com/cpu/utilization\""
                   ])
                   aggregation = {
@@ -46,7 +47,8 @@ resource "google_monitoring_dashboard" "airflow_vm_dashboard" {
                 timeSeriesFilter = {
                   filter = join(" AND ", [
                     "resource.type=\"gce_instance\"",
-                    "resource.labels.instance_name=\"airflow-dev\"",
+                    "resource.labels.instance_id=\"5536934707077466092\"",
+                    "resource.labels.zone=\"us-central1-a\"",
                     "metric.type=\"agent.googleapis.com/memory/percent_used\"",
                     "metric.labels.state=\"used\""
                   ])
@@ -75,7 +77,7 @@ resource "google_monitoring_dashboard" "airflow_vm_dashboard" {
                   ])
                   aggregation = {
                     alignmentPeriod  = "60s"
-                    perSeriesAligner = "ALIGN_SUM"
+                    perSeriesAligner = "ALIGN_DELTA"
                   }
                 }
               }
@@ -158,7 +160,7 @@ resource "google_monitoring_dashboard" "dataflow_dashboard" {
                   ])
                   aggregation = {
                     alignmentPeriod  = "60s"
-                    perSeriesAligner = "ALIGN_SUM"
+                    perSeriesAligner = "ALIGN_DELTA"
                   }
                 }
               }
