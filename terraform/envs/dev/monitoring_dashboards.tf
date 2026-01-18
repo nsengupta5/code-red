@@ -100,22 +100,22 @@ resource "google_monitoring_dashboard" "dataflow_dashboard" {
     gridLayout = {
       columns = 2
       widgets = [
-        # Dataflow aggregated worker utilization (all jobs in us-central1)
+        # Dataflow Current number of vCPUs in use (all jobs in us-central1)
         {
-            title = "Active workers - all Dataflow jobs"
+            title = "Current number of vCPUs in use – all Dataflow jobs"
             xyChart = {
                 dataSets = [{
                 plotType = "LINE"
                 timeSeriesQuery = {
                     timeSeriesQueryLanguage = <<-MQL
                     fetch dataflow_job
-                    | metric 'dataflow.googleapis.com/job/active_worker_instances'
+                    | metric 'dataflow.googleapis.com/job/current_num_vcpus'
                     | group_by [], mean(val())
                     | every 60s
                     MQL
                 }
                 }]
-                yAxis = { label = "workers", scale = "LINEAR" }
+                yAxis = { label = "vCPUs", scale = "LINEAR" }
             }
         },
 
@@ -152,7 +152,7 @@ resource "google_monitoring_dashboard" "dataflow_dashboard" {
                 plotType = "LINE"
                 timeSeriesQuery = {
                     timeSeriesQueryLanguage = <<-MQL
-                    fetch dataflow_job
+                    fetch global
                     | metric 'logging.googleapis.com/user/dataflow_oom_errors'
                     | group_by [], sum(val())
                     | every 60s
@@ -162,7 +162,6 @@ resource "google_monitoring_dashboard" "dataflow_dashboard" {
                 yAxis = { label = "count/min", scale = "LINEAR" }
             }
         }
-
       ]
     }
   })
