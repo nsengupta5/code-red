@@ -111,7 +111,7 @@ If you are unable to SSH into the Airflow VM or establish the SSH tunnel, and yo
 The GCP firewall rule allowing SSH access is restricted to a specific source IP range. When your public IP changes, the rule must be updated.
 
 ### Fix
-Update the firewall rule to allow your current public IP:
+Update the firewall rule to allow your current public IP (curl -4 ifconfig.me):
 
 ```bash
 gcloud compute firewall-rules update airflow-ssh \
