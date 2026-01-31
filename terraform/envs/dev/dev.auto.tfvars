@@ -3,7 +3,7 @@ enable_composer = false
 airflow_ui_source_ranges = [
   "31.4.245.31/32",
   "78.146.6.77/32",
-  "162.120.188.22/32"
+  "31.94.68.69/32"
 ]
 
 billing_account_id    = "01292C-DA6EA4-62AD48"
